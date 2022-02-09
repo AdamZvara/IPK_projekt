@@ -23,6 +23,9 @@ do {                                        \
 #define CPU_NAME "GET /cpu-name"
 #define LOAD "GET /load"
 
+const char msg[] = "HTTP/1.1 200 OK\r\nContent-Type: text/plain;\r\n\r\n";
+const char err_msg[] = "HTTP/1.1 404 Not Found\n";
+
 long parse_arg(int argc, char const *argv[])
 {
     if (argc != 2)
@@ -39,6 +42,96 @@ long parse_arg(int argc, char const *argv[])
     return port;
 }
 
+void hostname(int rcfd)
+{
+    struct utsname info;
+    uname(&info);
+    send(rcfd, msg, strlen(msg), 0);
+    send(rcfd, info.nodename, strlen(info.nodename), 0);
+}
+
+void cpuname(int rcfd)
+{
+    FILE *pf;
+    char data[1024] = {0};
+
+    // Setup our pipe for reading and execute our command.
+    pf = popen("lscpu","r");
+
+    // Get the data from the process execution
+    int lines = 0;
+    while (lines < 13) {
+        fgets(data, 1024, pf);
+        lines++;
+    }
+
+    char *str;
+    str = strtok(data, " ");
+    str = strtok(NULL, " ");
+    char name[200] = {0};
+
+    while ((str = strtok(NULL, " ")) != NULL) {
+        strcat(name, str);
+        strcat(name, " ");
+    }
+
+    send(rcfd, msg, strlen(msg), 0);
+    send(rcfd, name, strlen(name), 0);
+
+    // todo check if successfull
+    pclose(pf);
+}
+
+int percentage(int old[], int new[])
+{
+    int PrevIdle = old[3] + old[4];
+    int Idle = new[3] + new[4];
+
+    int PrevNonIdle = old[0] + old[1] + old[2] + old[5] + old[6] + old[7];
+    int NonIdle = new[0] + new[1] + new[2] + new[5] + new[6] + new[7];
+
+    int PrevTotal = PrevIdle + PrevNonIdle;
+    int Total = Idle + NonIdle;
+
+    int totald = Total - PrevTotal;
+    int idled = Idle - PrevIdle;
+
+    return (float)(totald - idled)/totald*100;
+
+}
+
+void get_cpuinfo(int arr[])
+{
+    FILE *proc;
+    char string[1024] = {0};
+
+    proc = fopen("/proc/stat", "r");
+    fgets(string, 1024, proc);
+
+    char *str;
+    int counter = 0;
+    str = strtok(string, " ");
+    while ((str = strtok(NULL, " ")) != NULL) {
+        arr[counter++] = atoi(str);
+    }
+
+    fclose(proc);
+}
+
+void cpuload(int rcfd)
+{
+    int old[10], new[10];
+    get_cpuinfo(old);
+
+    sleep(6);
+
+    get_cpuinfo(new);
+
+    char test[10] = {0};
+    sprintf(test, "%d", percentage(old, new));
+    strcat(test, "%");
+    send(rcfd, test, strlen(test), 0);
+}
 
 int main(int argc, char const *argv[])
 {
@@ -47,8 +140,7 @@ int main(int argc, char const *argv[])
     struct sockaddr_in sc_addr;
     struct sockaddr_un rc_addr;
     socklen_t rc_addr_size, option;
-    const char msg[] = "HTTP/1.1 200 OK\r\nContent-Type: text/plain;\r\n\r\n";
-    const char err_msg[] = "HTTP/1.1 404 Not Found\n";
+
 
     // parse port argument
     if ((port = parse_arg(argc, argv)) < 0)
@@ -89,13 +181,11 @@ int main(int argc, char const *argv[])
             send(rcfd, err_msg, strlen(err_msg), 0);
 
         if (!strncmp(buffer, HOSTNAME, strlen(HOSTNAME))) {
-            struct utsname info;
-            uname(&info);
-            send(rcfd, info.nodename, strlen(info.nodename), 0);
+            hostname(rcfd);
         } else if (!strncmp(buffer, CPU_NAME, strlen(CPU_NAME))) {
-            send(rcfd, msg, strlen(msg), 0);
+            cpuname(rcfd);
         } else if (!strncmp(buffer, LOAD, strlen(LOAD))) {
-            send(rcfd, msg, strlen(msg), 0);
+            cpuload(rcfd);
         } else {
             send(rcfd, err_msg, strlen(err_msg), 0);
         }

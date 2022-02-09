@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=c99 -g -Wall -Wextra -pedantic
+CFLAGS = -std=gnu11 -g -Wall -Wextra -pedantic
 
 TARGET = hinfosvc
 
