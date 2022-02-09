@@ -1,0 +1,14 @@
+./hinfosvc
+USAGE: ./hinfosvc port_number
+./hinfosvc abc
+USAGE: ./hinfosvc port_number
+./hinfosvc 80abc
+USAGE: ./hinfosvc port_number
+./hinfosvc abc09
+USAGE: ./hinfosvc port_number
+./hinfosvc 0a0b
+USAGE: ./hinfosvc port_number
+./hinfosvc -09999
+USAGE: ./hinfosvc port_number
+./hinfosvc -99
+USAGE: ./hinfosvc port_number
