@@ -5,6 +5,7 @@
 #include <sys/un.h>         // struct sockaddr_un
 #include <netinet/in.h>     // struct sockaddr_in
 #include <unistd.h>         // read
+#include <sys/utsname.h>    // uname
 
 #define USAGE                                               \
 do {                                                        \
@@ -12,11 +13,15 @@ do {                                                        \
     return -1;                                              \
 } while (0)                                                 \
 
-#define ERR(msg)                    \
-do {                                \
-    fprintf(stderr, "Error: %s\n", msg);   \
-    return -1;                      \
-} while (0)                         \
+#define ERR(msg)                            \
+do {                                        \
+    fprintf(stderr, "Error: %s\n", msg);    \
+    return -1;                              \
+} while (0)                                 \
+
+#define HOSTNAME "GET /hostname"
+#define CPU_NAME "GET /cpu-name"
+#define LOAD "GET /load"
 
 long parse_arg(int argc, char const *argv[])
 {
@@ -34,6 +39,7 @@ long parse_arg(int argc, char const *argv[])
     return port;
 }
 
+
 int main(int argc, char const *argv[])
 {
     int scfd;
@@ -41,6 +47,8 @@ int main(int argc, char const *argv[])
     struct sockaddr_in sc_addr;
     struct sockaddr_un rc_addr;
     socklen_t rc_addr_size, option;
+    const char msg[] = "HTTP/1.1 200 OK\r\nContent-Type: text/plain;\r\n\r\n";
+    const char err_msg[] = "HTTP/1.1 404 Not Found\n";
 
     // parse port argument
     if ((port = parse_arg(argc, argv)) < 0)
@@ -51,7 +59,8 @@ int main(int argc, char const *argv[])
 
     // forcefully attach socket to given port
     option = 1;
-    if (setsockopt(scfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &option, sizeof(option)))
+    //if (setsockopt(scfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &option, sizeof(option)))
+    if (setsockopt(scfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)))
         ERR("Failed to reuse the socket address");
 
     sc_addr.sin_family = AF_INET;
@@ -62,23 +71,38 @@ int main(int argc, char const *argv[])
         ERR("failed to bind socket");
 
     // listen with up to 3 request in queue
-    if (listen(scfd, 3) < 0)
+    if (listen(scfd, 1) < 0)
         ERR("server failed to listen to requests");
 
     // wait for requests
     rc_addr_size = sizeof(struct sockaddr_un);
 
-    //while (1) {
+    while (1) {
+        // create new socket to comunicate with user
         int rcfd = accept(scfd, (struct sockaddr *) &rc_addr, &rc_addr_size);
         if (rcfd == -1)
             ERR("could not accept request");
 
         char buffer[1024] = {0};
         int valread = read(rcfd, buffer, 1024);
-        printf("%s\n", buffer);
-        char msg[] = "HTTP/1.1 200 OK\r\nContent-Type: text/plain;\r\n\r\nTest";
-        send(rcfd, msg, strlen(msg), 0);
-    //}
+        if (valread <= 0 || valread == 1024)
+            send(rcfd, err_msg, strlen(err_msg), 0);
 
+        if (!strncmp(buffer, HOSTNAME, strlen(HOSTNAME))) {
+            struct utsname info;
+            uname(&info);
+            send(rcfd, info.__domainname, strlen(info.__domainname), 0);
+        } else if (!strncmp(buffer, CPU_NAME, strlen(CPU_NAME))) {
+            send(rcfd, msg, strlen(msg), 0);
+        } else if (!strncmp(buffer, LOAD, strlen(LOAD))) {
+            send(rcfd, msg, strlen(msg), 0);
+        } else {
+            send(rcfd, err_msg, strlen(err_msg), 0);
+        }
+
+        close(rcfd);
+    }
+
+    close(scfd);
     return 0;
 }
