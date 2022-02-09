@@ -91,7 +91,7 @@ int main(int argc, char const *argv[])
         if (!strncmp(buffer, HOSTNAME, strlen(HOSTNAME))) {
             struct utsname info;
             uname(&info);
-            send(rcfd, info.__domainname, strlen(info.__domainname), 0);
+            send(rcfd, info.nodename, strlen(info.nodename), 0);
         } else if (!strncmp(buffer, CPU_NAME, strlen(CPU_NAME))) {
             send(rcfd, msg, strlen(msg), 0);
         } else if (!strncmp(buffer, LOAD, strlen(LOAD))) {
