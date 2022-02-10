@@ -1,21 +1,13 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-#include <cstring>
+#include <cstring>          // strlen
 #include <sstream>          // istringstream
 #include <sys/socket.h>     // socket, bind, accept, listen
 #include <netinet/in.h>     // struct sockaddr_in
 #include <unistd.h>         // read
 
-using std::cerr;
-using std::endl;
-using std::istringstream;
-using std::invalid_argument;
-using std::exception;
-using std::runtime_error;
 using std::string;
-using std::to_string;
-using std::ifstream;
 
 #define ERR -1
 #define HOSTNAME "GET /hostname"
@@ -32,11 +24,11 @@ using std::ifstream;
 int get_port(char *str_port)
 {
     int port;
-    istringstream ss(str_port);
+    std::istringstream ss(str_port);
     if (!(ss >> port) || !ss.eof() || port > 65535) {
-        throw invalid_argument("Incorrect port number - must be integer in range 0-65535");
+        throw std::invalid_argument("Incorrect port number - must be integer in range 0-65535");
     } else if (port < 0) {
-        throw invalid_argument("Port number must be positive");
+        throw std::invalid_argument("Port number must be positive");
     }
 
     return port;
@@ -100,8 +92,8 @@ int cpu_percentage(int old_v[], int new_v[])
  */
 int cpuinfo(int arr[])
 {
-    ifstream proc;
-    proc.open("/proc/stat", ifstream::in);
+    std::ifstream proc;
+    proc.open("/proc/stat", std::ifstream::in);
 
     if (!proc) {
         return ERR;
@@ -111,7 +103,7 @@ int cpuinfo(int arr[])
     getline(proc, values);
     // remove "cpu" from line
     values.erase(0, 4);
-    istringstream stream(values);
+    std::istringstream stream(values);
 
     // convert numbers from string into integer array
     int n, counter = 0;
@@ -141,7 +133,7 @@ int get_cpuload(char *str, size_t str_length)
         return ERR;
     }
 
-    string tmp = to_string(cpu_percentage(old_values, new_values));
+    string tmp = std::to_string(cpu_percentage(old_values, new_values));
     if (str_length > tmp.length()+1) {
         memcpy(str, tmp.data(), tmp.length()+1);
     }
@@ -206,12 +198,12 @@ int main(int argc, char *argv[])
     int port;
     try {
         if (argc != 2) {
-            throw invalid_argument("USAGE: ./hinfosvc port_number");
+            throw std::invalid_argument("USAGE: ./hinfosvc port_number");
         } else {
             port = get_port(argv[1]);
         }
-    } catch(const exception& e) {
-        cerr << e.what() << '\n';
+    } catch(const std::exception& e) {
+        std::cerr << e.what() << std::endl;
         return ERR;
     }
 
@@ -227,28 +219,28 @@ int main(int argc, char *argv[])
     // create socket, bind it to address and listen to it
     try {
         if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-            throw runtime_error("could not create socket");
+            throw std::runtime_error("could not create socket");
 
         int option = 1;
         //if (setsockopt(scfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &option, sizeof(option)))
         if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)))
-            throw runtime_error("setsockopt failed");
+            throw std::runtime_error("setsockopt failed");
 
         if (bind(socket_fd, (struct sockaddr *)&s_addr, sizeof(struct sockaddr_in)) < 0)
-            throw runtime_error("failed to bind socket");
+            throw std::runtime_error("failed to bind socket");
 
         if (listen(socket_fd, 1) < 0)
-            throw runtime_error("server could not listen to requests");
+            throw std::runtime_error("server could not listen to requests");
 
-    } catch(const exception& e) {
-        cerr << "ERROR: " << e.what() << endl;
+    } catch(const std::exception& e) {
+        std::cerr << "ERROR: " << e.what() << std::endl;
         return ERR;
     }
 
     while (1) {
         // comunicate with user and process requests
         if (accept_request(socket_fd, s_addr, s_addr_size)) {
-            cerr << "Internal error occured" << endl;
+            std::cerr << "Internal error occured" << std::endl;
             return ERR;
         }
     }

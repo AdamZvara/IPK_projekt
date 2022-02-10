@@ -3,16 +3,16 @@ USAGE: ./hinfosvc port_number
 ./hinfosvc a b c
 USAGE: ./hinfosvc port_number
 ./hinfosvc abc
-Incorrect port number - must be integer
+Incorrect port number - must be integer in range 0-65535
 ./hinfosvc 80abc
-Incorrect port number - must be integer
+Incorrect port number - must be integer in range 0-65535
 ./hinfosvc abc09
-Incorrect port number - must be integer
+Incorrect port number - must be integer in range 0-65535
 ./hinfosvc 0a0b
-Incorrect port number - must be integer
+Incorrect port number - must be integer in range 0-65535
 ./hinfosvc -09999
 Port number must be positive
 ./hinfosvc -99
 Port number must be positive
 ./hinfosvc 0.1
-Incorrect port number - must be integer
+Incorrect port number - must be integer in range 0-65535
