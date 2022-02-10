@@ -1,0 +1,8 @@
+curl -s localhost:8080/
+Bad Request
+curl -s localhost:8080/abc
+Bad Request
+curl -s localhost:8080/hostname
+notebook
+curl -s localhost:8080/cpu-name
+Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz

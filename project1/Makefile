@@ -1,10 +1,10 @@
-CC = gcc
-CFLAGS = -std=gnu11 -g -Wall -Wextra -pedantic
+CC = g++
+CPPFLAGS = -std=c++11 -g -Wall -Wextra -pedantic
 
 TARGET = hinfosvc
 
-$(TARGET): $(TARGET).c
-		$(CC) $(CFLAGS) $^ -o $@
+$(TARGET): $(TARGET).cpp
+		$(CC) $(CPPFLAGS) $^ -o $@
 
 clean:
 		rm -rf $(TARGET)

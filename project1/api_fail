@@ -1,0 +1,7 @@
+#define socket(a,b,c) -1
+#define setsockopt(a,b,c,d,e) -1
+#define bind(a,b,c) -1
+#define listen(a,b) -1
+#define accept(a,b,c) -1
+#define send(a,b,c,d) -1
+#define popen(a,b) NULL

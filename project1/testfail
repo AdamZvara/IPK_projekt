@@ -1,14 +1,18 @@
 ./hinfosvc
 USAGE: ./hinfosvc port_number
+./hinfosvc a b c
+USAGE: ./hinfosvc port_number
 ./hinfosvc abc
-USAGE: ./hinfosvc port_number
+Incorrect port number - must be integer
 ./hinfosvc 80abc
-USAGE: ./hinfosvc port_number
+Incorrect port number - must be integer
 ./hinfosvc abc09
-USAGE: ./hinfosvc port_number
+Incorrect port number - must be integer
 ./hinfosvc 0a0b
-USAGE: ./hinfosvc port_number
+Incorrect port number - must be integer
 ./hinfosvc -09999
-USAGE: ./hinfosvc port_number
+Port number must be positive
 ./hinfosvc -99
-USAGE: ./hinfosvc port_number
+Port number must be positive
+./hinfosvc 0.1
+Incorrect port number - must be integer
