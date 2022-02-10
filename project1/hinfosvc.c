@@ -2,10 +2,8 @@
 #include <stdlib.h>         // strtol
 #include <string.h>         // strcmp
 #include <sys/socket.h>     // socket, bind, accept, listen
-#include <sys/un.h>         // struct sockaddr_un
 #include <netinet/in.h>     // struct sockaddr_in
 #include <unistd.h>         // read
-#include <sys/utsname.h>    // uname
 
 #define USAGE                                               \
 do {                                                        \
@@ -24,7 +22,7 @@ do {                                        \
 #define LOAD "GET /load"
 
 const char msg[] = "HTTP/1.1 200 OK\r\nContent-Type: text/plain;\r\n\r\n";
-const char err_msg[] = "HTTP/1.1 404 Not Found\n";
+const char err_msg[] = "HTTP/1.1 404 Not Found\n\n";
 
 long parse_arg(int argc, char const *argv[])
 {
@@ -44,10 +42,10 @@ long parse_arg(int argc, char const *argv[])
 
 void hostname(int rcfd)
 {
-    struct utsname info;
-    uname(&info);
+    char name[256];
+    gethostname(name, 256);
     send(rcfd, msg, strlen(msg), 0);
-    send(rcfd, info.nodename, strlen(info.nodename), 0);
+    send(rcfd, name, strlen(name), 0);
 }
 
 void cpuname(int rcfd)
@@ -123,13 +121,14 @@ void cpuload(int rcfd)
     int old[10], new[10];
     get_cpuinfo(old);
 
-    sleep(6);
+    sleep(1);
 
     get_cpuinfo(new);
 
     char test[10] = {0};
     sprintf(test, "%d", percentage(old, new));
     strcat(test, "%");
+    send(rcfd, msg, strlen(msg), 0);
     send(rcfd, test, strlen(test), 0);
 }
 
@@ -138,8 +137,7 @@ int main(int argc, char const *argv[])
     int scfd;
     long port;
     struct sockaddr_in sc_addr;
-    struct sockaddr_un rc_addr;
-    socklen_t rc_addr_size, option;
+    socklen_t addr_size, option;
 
 
     // parse port argument
@@ -155,6 +153,7 @@ int main(int argc, char const *argv[])
     if (setsockopt(scfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)))
         ERR("Failed to reuse the socket address");
 
+    // set socket address parameters
     sc_addr.sin_family = AF_INET;
     sc_addr.sin_addr.s_addr = INADDR_ANY;
     sc_addr.sin_port = htons(port);
@@ -162,22 +161,22 @@ int main(int argc, char const *argv[])
     if (bind(scfd, (struct sockaddr *)&sc_addr, sizeof(struct sockaddr_in)) == -1)
         ERR("failed to bind socket");
 
-    // listen with up to 3 request in queue
+    // listen with up to 1 request in queue
     if (listen(scfd, 1) < 0)
         ERR("server failed to listen to requests");
 
-    // wait for requests
-    rc_addr_size = sizeof(struct sockaddr_un);
+    addr_size = sizeof(struct sockaddr_in);
 
     while (1) {
-        // create new socket to comunicate with user
-        int rcfd = accept(scfd, (struct sockaddr *) &rc_addr, &rc_addr_size);
+        // await comunication with user
+        int rcfd = accept(scfd, (struct sockaddr *) &sc_addr, &addr_size);
         if (rcfd == -1)
             ERR("could not accept request");
 
         char buffer[1024] = {0};
         int valread = read(rcfd, buffer, 1024);
-        if (valread <= 0 || valread == 1024)
+        printf("%s", buffer);
+        if (valread <= 0)
             send(rcfd, err_msg, strlen(err_msg), 0);
 
         if (!strncmp(buffer, HOSTNAME, strlen(HOSTNAME))) {
@@ -193,6 +192,5 @@ int main(int argc, char const *argv[])
         close(rcfd);
     }
 
-    close(scfd);
     return 0;
 }
