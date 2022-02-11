@@ -33,7 +33,11 @@ kill $PID
 ./hinfosvc 8080 &
 
 while read -r LINE; do
-    echo -e "${BLUE}Testing:${NC} $LINE"
+    if [ ${#LINE} -gt 100 ]; then
+        echo -e "${BLUE}Testing:${NC} Long input ...";
+    else
+        echo -e "${BLUE}Testing:${NC} $LINE"
+    fi
 
     RESULT=$($LINE) > /dev/null
     read -r EXPECTED

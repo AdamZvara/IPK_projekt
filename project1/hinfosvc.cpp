@@ -19,8 +19,7 @@ using std::string;
  * @brief Convert port number from string format to integer
  * @param[in] str_port Port number in string format
  * @return Converted port number as integer
- * @exception invalid_argument when port number is float or not in range uint16_t
- *  or floating point
+ * @exception invalid_argument when port number is float or not in range of uint16_t
  */
 int get_port(char *str_port)
 {
@@ -38,6 +37,7 @@ int get_port(char *str_port)
  * @details Function uses lscpu and awk to extract CPU name
  * @param[out] name Char array to store name into
  * @param[in] name_length Char length
+ * @return 0 if successfull, otherwise ERR
  */
 int get_cpuname(char *name, size_t name_length)
 {
@@ -52,12 +52,10 @@ int get_cpuname(char *name, size_t name_length)
         printf($NF)                 \
         }}'","r");
 
-    if (pf == nullptr) {
+    if (pf == nullptr || !fgets(name, name_length, pf)) {
         return ERR;
-
     }
 
-    fgets(name, name_length, pf);
     pclose(pf);
     return 0;
 }
@@ -66,10 +64,13 @@ int get_cpuname(char *name, size_t name_length)
  * @brief Calculate CPU load percentage from 2 arrays
  * @param[in] old_v First array of measured CPU values
  * @param[in] new_v Second array of measured CPU values
- * @return CPU load percentage
+ * @return CPU load percentage truncated to int
  */
 int cpu_percentage(unsigned long long old_v[], unsigned long long new_v[])
 {
+    //code taken from: https://stackoverflow.com/questions/23367857/accurate-calculation-of-cpu-usage-given-in-percentage-in-linux
+    //user: https://stackoverflow.com/users/1275161/vangelis-tasoulas
+    //date: 11.02.2022
     unsigned long long PrevIdle = old_v[3] + old_v[4];
     unsigned long long Idle = new_v[3] + new_v[4];
 
@@ -88,6 +89,7 @@ int cpu_percentage(unsigned long long old_v[], unsigned long long new_v[])
 /**
  * @brief Get numeric values from /proc/stat (first line)
  * @param[out] arr Array to store extracted values into
+ * @return 0 if successfull, otherwise ERR
  */
 int cpuinfo(unsigned long long arr[])
 {
@@ -101,11 +103,11 @@ int cpuinfo(unsigned long long arr[])
     string values;
     getline(proc, values);
     // remove "cpu" from line
-    values.erase(0, 4);
+    values.erase(0, values.find(' '));
     std::istringstream stream(values);
 
     // convert numbers from string into array
-    int n, counter = 0;
+    unsigned long long n, counter = 0;
     while(stream >> n) {
         arr[counter++] = n;
     }
@@ -119,11 +121,11 @@ int cpuinfo(unsigned long long arr[])
  * @param[in] str String to store evaluated CPU usage
  * @param[in] str_length Length of given string
  * @param[in] sleep_time Time between CPU measurings
- * @return 0 if no error occured, otherwise return ERR
+ * @return 0 if successfull, otherwise return ERR
  */
 int get_cpuload(char *str, size_t str_length, int sleep_time)
 {
-    // get 2 sets of CPU time values, separated by 1 second
+    // get 2 sets of CPU time values, separated by sleep time
     unsigned long long old_values[10], new_values[10];
     if (cpuinfo(old_values)) {
         return ERR;
@@ -146,13 +148,13 @@ int get_cpuload(char *str, size_t str_length, int sleep_time)
  * @param[in] socket_fd socket descriptor
  * @param[in] s_addr socket address
  * @param[in] addr_size address size
- * @return
+ * @return 0 if successfull, otherwise ERR
  */
 int accept_request(int socket_fd, sockaddr_in s_addr, socklen_t addr_size)
 {
     int receive_fd;
     if ((receive_fd = accept(socket_fd, (sockaddr *) &s_addr, &addr_size)) < 0)
-        return -1;
+        return ERR;
 
     string msg = "HTTP/1.1 200 OK\r\nContent-Type: text/plain;\r\n\r\n";
     const string err_msg = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain;\r\n\r\nBad Request";
@@ -163,9 +165,12 @@ int accept_request(int socket_fd, sockaddr_in s_addr, socklen_t addr_size)
         return ERR;
     }
 
+    // temporary char array to store hostname, cpuname or cpuload and then
+    // append it to msg
     const int content_len = 512;
     char http_content[content_len] = {0};
 
+    // separate request types
     if (!strncmp(request, HOSTNAME, strlen(HOSTNAME))) {
         if (gethostname(http_content, content_len))
             return ERR;
@@ -184,6 +189,7 @@ int accept_request(int socket_fd, sockaddr_in s_addr, socklen_t addr_size)
 
     msg.append(http_content);
     msg.append("\n");
+
     if (send(receive_fd, msg.data(), msg.length(), 0) < 0)
         return ERR;
 
@@ -195,7 +201,7 @@ int accept_request(int socket_fd, sockaddr_in s_addr, socklen_t addr_size)
 int main(int argc, char *argv[])
 {
     // get port number from argv
-    int port;
+    uint16_t port;
     try {
         if (argc != 2) {
             throw std::invalid_argument("USAGE: ./hinfosvc port_number");
@@ -208,6 +214,7 @@ int main(int argc, char *argv[])
     }
 
 
+    // create socket, bind it to address and listen to it
     int socket_fd;
     sockaddr_in s_addr;
     socklen_t s_addr_size = sizeof(sockaddr_in);
@@ -216,7 +223,6 @@ int main(int argc, char *argv[])
     s_addr.sin_addr.s_addr = INADDR_ANY;
     s_addr.sin_port = htons(port);
 
-    // create socket, bind it to address and listen to it
     try {
         if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
             throw std::runtime_error("could not create socket");
@@ -237,8 +243,8 @@ int main(int argc, char *argv[])
         return ERR;
     }
 
+    // comunicate with user and process requests until user ends program
     while (1) {
-        // comunicate with user and process requests
         if (accept_request(socket_fd, s_addr, s_addr_size)) {
             std::cerr << "Internal error occured" << std::endl;
             return ERR;

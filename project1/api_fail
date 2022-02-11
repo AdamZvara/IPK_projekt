@@ -5,3 +5,4 @@
 #define accept(a,b,c) -1
 #define send(a,b,c,d) -1
 #define popen(a,b) NULL
+#define fgets(a,b,c) NULL
