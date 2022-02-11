@@ -13,6 +13,7 @@ using std::string;
 #define HOSTNAME "GET /hostname"
 #define CPU_NAME "GET /cpu-name"
 #define LOAD "GET /load"
+#define SLEEP_TIME 1
 
 /**
  * @brief Convert port number from string format to integer
@@ -119,16 +120,17 @@ int cpuinfo(int arr[])
  * @brief Provide CPU usage percentage
  * @param[in] str String to store evaluated CPU usage
  * @param[in] str_length Length of given string
+ * @param[in] sleep_time Time between CPU measurings
  * @return 0 if no error occured, otherwise return ERR
  */
-int get_cpuload(char *str, size_t str_length)
+int get_cpuload(char *str, size_t str_length, int sleep_time)
 {
     // get 2 sets of CPU time values, separated by 1 second
     int old_values[10], new_values[10];
     if (cpuinfo(old_values)) {
         return ERR;
     }
-    sleep(1);
+    sleep(sleep_time);
     if (cpuinfo(new_values)) {
         return ERR;
     }
@@ -173,7 +175,7 @@ int accept_request(int socket_fd, sockaddr_in s_addr, socklen_t addr_size)
         if (get_cpuname(http_content, content_len))
             return ERR;
     } else if (!strncmp(request, LOAD, strlen(LOAD))) {
-        if (get_cpuload(http_content, content_len))
+        if (get_cpuload(http_content, content_len, SLEEP_TIME))
             return ERR;
     } else {
         if (send(receive_fd, err_msg.data(), err_msg.length(), 0) < 0)
