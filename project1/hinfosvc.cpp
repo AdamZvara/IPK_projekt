@@ -13,23 +13,21 @@ using std::string;
 #define HOSTNAME "GET /hostname"
 #define CPU_NAME "GET /cpu-name"
 #define LOAD "GET /load"
-#define SLEEP_TIME 1
+#define SLEEP_TIME 5
 
 /**
  * @brief Convert port number from string format to integer
- * @details Function throws invalid_argument when port number is negative
- *  or floating point
  * @param[in] str_port Port number in string format
  * @return Converted port number as integer
+ * @exception invalid_argument when port number is float or not in range uint16_t
+ *  or floating point
  */
 int get_port(char *str_port)
 {
     int port;
     std::istringstream ss(str_port);
-    if (!(ss >> port) || !ss.eof() || port > 65535) {
+    if (!(ss >> port) || !ss.eof() || port > 65535 || port < 0) {
         throw std::invalid_argument("Incorrect port number - must be integer in range 0-65535");
-    } else if (port < 0) {
-        throw std::invalid_argument("Port number must be positive");
     }
 
     return port;
@@ -70,19 +68,19 @@ int get_cpuname(char *name, size_t name_length)
  * @param[in] new_v Second array of measured CPU values
  * @return CPU load percentage
  */
-int cpu_percentage(int old_v[], int new_v[])
+int cpu_percentage(long old_v[], long new_v[])
 {
-    int PrevIdle = old_v[3] + old_v[4];
-    int Idle = new_v[3] + new_v[4];
+    long PrevIdle = old_v[3] + old_v[4];
+    long Idle = new_v[3] + new_v[4];
 
-    int PrevNonIdle = old_v[0] + old_v[1] + old_v[2] + old_v[5] + old_v[6] + old_v[7];
-    int NonIdle = new_v[0] + new_v[1] + new_v[2] + new_v[5] + new_v[6] + new_v[7];
+    long PrevNonIdle = old_v[0] + old_v[1] + old_v[2] + old_v[5] + old_v[6] + old_v[7];
+    long NonIdle = new_v[0] + new_v[1] + new_v[2] + new_v[5] + new_v[6] + new_v[7];
 
-    int PrevTotal = PrevIdle + PrevNonIdle;
-    int Total = Idle + NonIdle;
+    long PrevTotal = PrevIdle + PrevNonIdle;
+    long Total = Idle + NonIdle;
 
-    int totald = Total - PrevTotal;
-    int idled = Idle - PrevIdle;
+    long totald = Total - PrevTotal;
+    long idled = Idle - PrevIdle;
 
     return (float)(totald - idled)/totald*100;
 }
@@ -91,7 +89,7 @@ int cpu_percentage(int old_v[], int new_v[])
  * @brief Get numeric values from /proc/stat (first line)
  * @param[out] arr Array to store extracted values into
  */
-int cpuinfo(int arr[])
+int cpuinfo(long arr[])
 {
     std::ifstream proc;
     proc.open("/proc/stat", std::ifstream::in);
@@ -106,7 +104,7 @@ int cpuinfo(int arr[])
     values.erase(0, 4);
     std::istringstream stream(values);
 
-    // convert numbers from string into integer array
+    // convert numbers from string into array
     int n, counter = 0;
     while(stream >> n) {
         arr[counter++] = n;
@@ -126,7 +124,7 @@ int cpuinfo(int arr[])
 int get_cpuload(char *str, size_t str_length, int sleep_time)
 {
     // get 2 sets of CPU time values, separated by 1 second
-    int old_values[10], new_values[10];
+    long old_values[10], new_values[10];
     if (cpuinfo(old_values)) {
         return ERR;
     }
