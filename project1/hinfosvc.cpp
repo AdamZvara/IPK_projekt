@@ -68,19 +68,19 @@ int get_cpuname(char *name, size_t name_length)
  * @param[in] new_v Second array of measured CPU values
  * @return CPU load percentage
  */
-int cpu_percentage(long old_v[], long new_v[])
+int cpu_percentage(unsigned long long old_v[], unsigned long long new_v[])
 {
-    long PrevIdle = old_v[3] + old_v[4];
-    long Idle = new_v[3] + new_v[4];
+    unsigned long long PrevIdle = old_v[3] + old_v[4];
+    unsigned long long Idle = new_v[3] + new_v[4];
 
-    long PrevNonIdle = old_v[0] + old_v[1] + old_v[2] + old_v[5] + old_v[6] + old_v[7];
-    long NonIdle = new_v[0] + new_v[1] + new_v[2] + new_v[5] + new_v[6] + new_v[7];
+    unsigned long long PrevNonIdle = old_v[0] + old_v[1] + old_v[2] + old_v[5] + old_v[6] + old_v[7];
+    unsigned long long NonIdle = new_v[0] + new_v[1] + new_v[2] + new_v[5] + new_v[6] + new_v[7];
 
-    long PrevTotal = PrevIdle + PrevNonIdle;
-    long Total = Idle + NonIdle;
+    unsigned long long PrevTotal = PrevIdle + PrevNonIdle;
+    unsigned long long Total = Idle + NonIdle;
 
-    long totald = Total - PrevTotal;
-    long idled = Idle - PrevIdle;
+    unsigned long long totald = Total - PrevTotal;
+    unsigned long long idled = Idle - PrevIdle;
 
     return (float)(totald - idled)/totald*100;
 }
@@ -89,7 +89,7 @@ int cpu_percentage(long old_v[], long new_v[])
  * @brief Get numeric values from /proc/stat (first line)
  * @param[out] arr Array to store extracted values into
  */
-int cpuinfo(long arr[])
+int cpuinfo(unsigned long long arr[])
 {
     std::ifstream proc;
     proc.open("/proc/stat", std::ifstream::in);
@@ -124,7 +124,7 @@ int cpuinfo(long arr[])
 int get_cpuload(char *str, size_t str_length, int sleep_time)
 {
     // get 2 sets of CPU time values, separated by 1 second
-    long old_values[10], new_values[10];
+    unsigned long long old_values[10], new_values[10];
     if (cpuinfo(old_values)) {
         return ERR;
     }
