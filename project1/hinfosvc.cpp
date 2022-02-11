@@ -13,7 +13,7 @@ using std::string;
 #define HOSTNAME "GET /hostname"
 #define CPU_NAME "GET /cpu-name"
 #define LOAD "GET /load"
-#define SLEEP_TIME 5
+#define SLEEP_TIME 1
 
 /**
  * @brief Convert port number from string format to integer
@@ -136,8 +136,11 @@ int get_cpuload(char *str, size_t str_length, int sleep_time)
     }
 
     string tmp = std::to_string(cpu_percentage(old_values, new_values));
+    tmp.push_back('%');
     if (str_length > tmp.length()+1) {
         memcpy(str, tmp.data(), tmp.length()+1);
+    } else {
+        return ERR;
     }
 
     return 0;
@@ -157,8 +160,10 @@ int accept_request(int socket_fd, sockaddr_in s_addr, socklen_t addr_size)
         return ERR;
 
     string msg = "HTTP/1.1 200 OK\r\nContent-Type: text/plain;\r\n\r\n";
-    const string err_msg = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain;\r\n\r\nBad Request";
-
+    const string err_msg = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain;\
+                            \r\n\r\nBad Request";
+    const string internal = "HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain;\
+                            \r\n\r\nInternal Error";
     char request[1024] = {0};
     if (read(receive_fd, request, 1024) < 0) {
         close(receive_fd);
