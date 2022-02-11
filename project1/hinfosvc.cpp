@@ -228,8 +228,7 @@ int main(int argc, char *argv[])
             throw std::runtime_error("could not create socket");
 
         int option = 1;
-        //if (setsockopt(scfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &option, sizeof(option)))
-        if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)))
+        if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &option, sizeof(option)))
             throw std::runtime_error("setsockopt failed");
 
         if (bind(socket_fd, (struct sockaddr *)&s_addr, sizeof(struct sockaddr_in)) < 0)
