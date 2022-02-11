@@ -11,8 +11,8 @@ Incorrect port number - must be integer in range 0-65535
 ./hinfosvc 0a0b
 Incorrect port number - must be integer in range 0-65535
 ./hinfosvc -09999
-Port number must be positive
+Incorrect port number - must be integer in range 0-65535
 ./hinfosvc -99
-Port number must be positive
+Incorrect port number - must be integer in range 0-65535
 ./hinfosvc 0.1
 Incorrect port number - must be integer in range 0-65535
