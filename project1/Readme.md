@@ -1,9 +1,9 @@
 # IPK Projekt 1
 Projekt 1 pre predmet IPK - vytvorenie lightweight serveru v jazyku C++, ktorý prostredníctvom protokolu HTTP poskytuje základné informácie o systéme.
 
-**autor:** Adam Zvara
-**login:** xzvara01
-**email:** xzvara01@stud.fit.vutbr.cz
+**autor**: Adam Zvara <br/>
+**login:** xzvara01 <br/>
+**email:** xzvara01@stud.fit.vutbr.cz <br/>
 
 ## Inštalácia
 Rozbalenie priečinku xzvara01.zip a preklad pomocou priloženého súboru Makefile vytvorí spustiteľný súbor **hinfosvc**.
