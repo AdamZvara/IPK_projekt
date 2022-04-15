@@ -2,3 +2,8 @@ parsovanie argumentov:
     parsuje pomocou argp, nejaka nadstavba nad getopt
     aktualne je problem s tým, že neviem zadať optional parameter interface pri iných options (neviem či to je treba riešiť)
         ./main interface funguje tak ako by malo
+
+uz su nasetupovane veci na ubuntu, mali by bezat na nejakych portoch aj TCP aj UDP (kontrola nmap localhost, sudo nmap -sU localhost)
+prípadne sa dá skenovať adresa nmap hackme.org
+
+do budúcna možno skúsiť pridať interface a skúsiť cez neho skenovať
