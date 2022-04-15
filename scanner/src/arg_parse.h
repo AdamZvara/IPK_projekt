@@ -11,7 +11,8 @@
 #include <stdio.h>
 
 #define E_MISSING_DOMAIN -1
-#define error_internal() {fprintf(stderr, "Internal error occured\n"); exit(-2);}
+#define E_INTERFACE -2
+#define error_internal() {fprintf(stderr, "Internal error occured\n"); exit(-3);}
 #define TIMEOUT_DEFAULT  5000
 
 /** @enum Define format of scanned ports used program options */
@@ -44,10 +45,10 @@ struct arguments
 
 // All possbile ARGP options
 struct argp_option options[] = {
-    {"interface", 'i', "INTERFACE", 0, "Interface used for scanning", 0},
-    {"pu",        'u', "UDP_PORTS", 0, "UDP port range", 0},
-    {"pt",        't', "TCP_PORTS", 0, "TCP port range", 0},
-    {"wait",      'w', "TIMEOUT",   0, "Maximum waiting time for server response", 0},
+    {"interface", 'i', "interface",    0, "Interface used for scanning", 0},
+    {"pu",        'u', "(range|list)", 0, "UDP port range", 0},
+    {"pt",        't', "(range|list)", 0, "TCP port range", 0},
+    {"wait",      'w', "miliseconds",  0, "Maximum waiting time for server response", 0},
     { 0 }
 };
 
@@ -160,32 +161,6 @@ void set_port(enum port_format *t, struct port *port, char *argument)
     }
 }
 
-/**
- * @brief Get domain-name/IP-address from program arguments
- * @details This function is called before argp_parse and changes argv and argc.
- *  It assumes the last option given to program is domain-name or IP-address, parses it
- *  into arguments structure and removes it from argv (decrements argc). If there are no
- *  options to be parsed, function exits the program with E_MISSING_DOMAIN.
- * @param[in,out] argc  Number of arguments
- * @param[in,out] argv  Program arguments
- * @param[out]    args  Pointer to arguments structure to store domain into
- */
-void domain_parse(int *argc, char *argv[], struct arguments *args)
-{
-    if (*argc < 2) {
-        fprintf(stderr, "No domain name or IP address specified\n");
-        exit(E_MISSING_DOMAIN);
-    }
-
-    // set args->domain to extracted domain (only 255 characters)
-    /* memset(args->domain, 0, 256); // not mandatory since static variables are initialized with 0 */
-    strncpy(args->domain, argv[*argc-1], 255);
-
-    // delete last argument from argv and decrement argc
-    memset(&(argv[*argc-1]), 0, sizeof(void *));
-    (*argc)--;
-}
-
 // Function to determine actions when certain option is found
 error_t parse_opt (int key, char *arg, struct argp_state *state)
 {
@@ -210,6 +185,12 @@ error_t parse_opt (int key, char *arg, struct argp_state *state)
                 fprintf(stderr, "Timeout value could not be converted. Using default value ...\n");
             break;
 
+        case ARGP_KEY_ARG:
+            if (state->arg_num >= 2)
+                argp_usage(state);
+            strncpy(arguments->domain, arg, 255);
+            break;
+
         default:
             return ARGP_ERR_UNKNOWN;
     }
@@ -230,8 +211,11 @@ struct argp argp = {options, parse_opt, args_doc, doc, children, help_filter, ar
 struct arguments *args_parse(int argc, char *argv[]) {
     static struct arguments args;
     args.timeout = TIMEOUT_DEFAULT;
-    domain_parse(&argc, argv, &args);
     argp_parse(&argp, argc, argv, 0, 0, &args);
+    if (!strcmp(args.domain, "")) {
+        fprintf(stderr, "Missing domain\n");
+        exit(E_MISSING_DOMAIN);
+    }
     return &args;
 }
 

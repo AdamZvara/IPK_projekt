@@ -1,5 +1,4 @@
 parsovanie argumentov:
-    subor arg_parse.h
-    parsuje pomocou
-
-    TODO help message
+    parsuje pomocou argp, nejaka nadstavba nad getopt
+    aktualne je problem s tým, že neviem zadať optional parameter interface pri iných options (neviem či to je treba riešiť)
+        ./main interface funguje tak ako by malo
