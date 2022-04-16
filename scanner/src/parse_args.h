@@ -20,7 +20,7 @@ enum error {E_INTERNAL = -10, E_UNKNOWN_OPT, E_OPT_MISSING_ARG, E_MISSING_DOMAIN
 /** @enum Define format of scanned ports used program options */
 enum port_format
 {
-    CONT, /*!< continuous format: range (eg. 20-30) */
+    CONT = 1, /*!< continuous format: range (eg. 20-30) */
     DISC  /*!< discrete format: concrete values (eg. 20,30) */
 };
 
