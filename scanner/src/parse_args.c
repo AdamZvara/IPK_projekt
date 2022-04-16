@@ -199,26 +199,30 @@ void print_args(struct arguments user_args)
     printf("domain: %s\n", user_args.domain);
     printf("interface: %s\n", user_args.interface);
     printf("TCP ports:\n");
-    if (user_args.tcp_type == CONT) {
-        printf("\tstart: %d\n", user_args.tcp.start);
-        printf("\tend: %d\n", user_args.tcp.end);
-    } else {
-        printf("\tPort array: ");
-        for (int i = 0; i < user_args.tcp.array_length; i++) {
-            printf("%d, ", user_args.tcp.array[i]);
+    if (user_args.tcp_type != 0) {
+        if (user_args.tcp_type == CONT) {
+            printf("\tstart: %d\n", user_args.tcp.start);
+            printf("\tend: %d\n", user_args.tcp.end);
+        } else {
+            printf("\tPort array: ");
+            for (int i = 0; i < user_args.tcp.array_length; i++) {
+                printf("%d, ", user_args.tcp.array[i]);
+            }
+            printf("\n");
         }
-        printf("\n");
     }
-    printf("UDP ports:\n");
-    if (user_args.udp_type == CONT) {
-        printf("\tstart: %d\n", user_args.udp.start);
-        printf("\tend: %d\n", user_args.udp.end);
-    } else {
-        printf("\tPort array: ");
-        for (int i = 0; i < user_args.udp.array_length; i++) {
-            printf("%d, ", user_args.udp.array[i]);
+    if (user_args.udp_type != 0) {
+        printf("UDP ports:\n");
+        if (user_args.udp_type == CONT) {
+            printf("\tstart: %d\n", user_args.udp.start);
+            printf("\tend: %d\n", user_args.udp.end);
+        } else {
+            printf("\tPort array: ");
+            for (int i = 0; i < user_args.udp.array_length; i++) {
+                printf("%d, ", user_args.udp.array[i]);
+            }
+            printf("\n");
         }
-        printf("\n");
     }
     printf("timeout: %d\n", user_args.timeout);
 }
