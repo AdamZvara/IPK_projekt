@@ -38,8 +38,8 @@ int convert_port_number(char *port_number)
 /* Set start and end boundaries of given port type in argument structure */
 void set_port_range(struct port *port, char *argument)
 {
-    char start[6] = {};
-    char end[6] = {};
+    char start[256] = {};
+    char end[256] = {};
     int i;
 
     // starting port number
@@ -80,7 +80,7 @@ void set_port_array(struct port *port, char *argument)
     // convert numbers and store them in allocated array
     int number_position = 0;
     int arr_position = 0;
-    char number[6] = {};
+    char number[256] = {};
     for (int i = 0; argument[i] != '\0'; i++) {
         if (argument[i] != ',') {
             number[number_position++] = argument[i];
