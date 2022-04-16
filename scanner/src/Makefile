@@ -2,14 +2,11 @@ CC = gcc
 CFLAGS = -g -std=c17 -Wall -Wextra
 
 project = main
-network = network
-
-src = $(project).c $(network).c
 
 .PHONY: clean
 
-$(project): $(project).c arg_parse.h network.h
-	$(CC) $(CFLAGS) $(src) -o $@
+$(project): $(project).c arg_parse.o network.o
+	$(CC) $(CFLAGS) $(project).c network.c arg_parse.c -o $@
 
 clean:
-	rm -rf $(project)
+	rm -rf $(project) *.o
