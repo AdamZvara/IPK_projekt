@@ -17,7 +17,6 @@
 
 enum error {E_INTERNAL = -10, E_UNKNOWN_OPT, E_OPT_MISSING_ARG, E_MISSING_DOMAIN, E_MISSING_INTERFACE, E_MISSING_PORTS, E_PORT_NUMBER};
 
-
 /** @enum Define format of scanned ports used program options */
 enum port_format
 {
@@ -54,12 +53,12 @@ struct arguments
  * @param[in] argv Program arguments
  * @return Static structure 'arguments' containing parsed options
  */
-struct arguments *args_parse(int argc, char *argv[]);
+struct arguments *parse_args(int argc, char *argv[]);
 
 /**
  * @brief Print argument structure
  * @param[in] user_args Argument structure
  */
-void args_print(struct arguments user_args);
+void print_args(struct arguments user_args);
 
 #endif

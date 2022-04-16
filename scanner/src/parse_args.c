@@ -8,7 +8,6 @@
 #include "network.h"
 #include "parse_args.h"
 
-
 static char help_string[] =
 "USAGE: ./ipk-l4-scan interface ports domain {timeout}\n\
 Scan domain for openned ports\n\n\
@@ -18,7 +17,6 @@ ports\n\t-u | --pu=port_range Range of UDP ports to be scanned\n\
 \t-t | --pt=port_range Range of TCP ports to be scanned\n\
 domain\n\t domain name or IP address to be scanned\n\
 timeout\n\t -w | --wait=miliseconds Time used to wait for response from server\n";
-
 
 /* Convert port number from string to integer and check boundaries */
 int convert_port_number(char *port_number)
@@ -37,6 +35,7 @@ int convert_port_number(char *port_number)
     return retval;
 }
 
+/* Set start and end boundaries of given port type in argument structure */
 void set_port_range(struct port *port, char *argument)
 {
     char start[6] = {};
@@ -62,6 +61,7 @@ void set_port_range(struct port *port, char *argument)
     }
 }
 
+/* Fill TCP/UDP port array of given port type in argument structure */
 void set_port_array(struct port *port, char *argument)
 {
     // count commas in argument and allocate space for array
@@ -94,6 +94,7 @@ void set_port_array(struct port *port, char *argument)
     port->array[arr_position] = convert_port_number(number); // insert last number
 }
 
+/* Set values in TCP/UDP port members of structure arguments */
 void set_port(enum port_format *t, struct port *port, char *argument)
 {
     if (strchr(argument, '-')) {
@@ -105,7 +106,7 @@ void set_port(enum port_format *t, struct port *port, char *argument)
     }
 }
 
-struct arguments *args_parse(int argc, char *argv[]) {
+struct arguments *parse_args(int argc, char *argv[]) {
     static struct arguments args;
     args.timeout = TIMEOUT_DEFAULT;
 
@@ -193,7 +194,7 @@ struct arguments *args_parse(int argc, char *argv[]) {
     return &args;
 }
 
-void args_print(struct arguments user_args)
+void print_args(struct arguments user_args)
 {
     printf("domain: %s\n", user_args.domain);
     printf("interface: %s\n", user_args.interface);

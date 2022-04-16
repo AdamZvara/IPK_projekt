@@ -1,19 +1,20 @@
 #ifndef _NETWORK_H
 #define _NETWORK_H 1
 
+#include <stdbool.h>
 #include "parse_args.h"
 
 /**
  * @brief Check if given address is in valid IP format
  *
- * @return 1 if address is in correct format, otherwise 0
+ * @return True if address is in correct format, otherwise False
  */
-int valid_address(char *address);
+bool valid_address(char *address);
 
 /**
  * @brief Convert domain name to IP address (IPv4)
  *
- * @return IP address if successful, otherwise NULL
+ * @return Pointer to converted IP address if successful, otherwise NULL
  */
 const char *resolve_hostname(char *domain);
 

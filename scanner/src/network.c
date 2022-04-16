@@ -14,7 +14,7 @@
 
 #include "network.h"
 
-int valid_address(char *address)
+bool valid_address(char *address)
 {
     struct sockaddr_in sa;
     int result = inet_pton(AF_INET, address, &(sa.sin_addr));
@@ -35,14 +35,14 @@ const char *resolve_hostname(char *domain)
 
 void print_interfaces()
 {
-    struct if_nameindex *if_nidxs, *intf;
+    struct if_nameindex *name_index, *intf;
 
-    if_nidxs = if_nameindex();
-    if (if_nidxs != NULL) {
-        for (intf = if_nidxs; intf->if_index != 0 || intf->if_name != NULL; intf++) {
+    name_index = if_nameindex();
+    if (name_index != NULL) {
+        for (intf = name_index; intf->if_index != 0 || intf->if_name != NULL; intf++) {
             printf("%s\n", intf->if_name);
         }
-        if_freenameindex(if_nidxs);
+        if_freenameindex(name_index);
     }
 }
 
