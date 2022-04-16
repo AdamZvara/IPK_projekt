@@ -2,3 +2,13 @@ parsovanie argumentov:
     parsuje pomocou argp, nejaka nadstavba nad getopt
     aktualne je problem s tým, že neviem zadať optional parameter interface pri iných options (neviem či to je treba riešiť)
         ./main interface funguje tak ako by malo
+
+porovnanie vystupu aplikacie s nmap - nastroj na skenovanie portov
+
+testovanie aplikacie:
+    vytvorenie skriptu server.sh ktorý pomocou pythonu vytvára otvorené porty 
+    potvrdenie nmap že tam skutočne sú
+    tieto porty > 1024 z bezpečnostných dôvodov
+    možno nainštalovať rovnaké servery jak som mal predtým aby som otestoval aj porty < 1024
+    skúsiť spraviť nejakú jednoduchú architektúru podľa návodu http://www.brianlinkletter.com/how-to-use-virtualbox-to-emulate-a-network/ - 2pc jeden router, 
+        jeden pc bude mať otvorené porty a druhý ich bude skenovať
