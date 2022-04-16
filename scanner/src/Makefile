@@ -1,12 +1,13 @@
 CC = gcc
-CFLAGS = -g -std=c17 -Wall -Wextra
+CFLAGS = -g -std=gnu99 -Wall -Wextra
 
-project = main
+project = ipk-l4-scan
 
 .PHONY: clean
 
-$(project): $(project).c arg_parse.o network.o
-	$(CC) $(CFLAGS) $(project).c network.c arg_parse.c -o $@
-
+$(project): $(project).c parse_args.o network.o
+	$(CC) $(CFLAGS) $^ -o $@
+	rm -rf *.o
+	
 clean:
 	rm -rf $(project) *.o

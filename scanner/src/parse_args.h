@@ -1,5 +1,5 @@
 /**
- * @file    arg_parse.h
+ * @file    parse_args.h
  * @author  Adam Zvara, xzvara01@vutbr.cz
  * @brief   Header file for parsing command line options
  */
@@ -7,16 +7,16 @@
 #ifndef _ARG_PARSE_H
 #define _ARG_PARSE_H 1
 
-#include <argp.h>
 #include <stdlib.h>
-#include <error.h>
 #include <string.h>
 #include <stdio.h>
 
-#define E_MISSING_DOMAIN -1
-#define E_INTERFACE -2
-#define error_internal() {fprintf(stderr, "Internal error occured\n"); exit(-3);}
 #define TIMEOUT_DEFAULT  5000
+#define error_internal() {fprintf(stderr, "Internal error occured\n"); exit(E_INTERNAL);}
+#define help() {fprintf(stderr, "%s", help_string); exit(0);}
+
+enum error {E_INTERNAL = -10, E_UNKNOWN_OPT, E_OPT_MISSING_ARG, E_MISSING_DOMAIN, E_MISSING_INTERFACE, E_MISSING_PORTS, E_PORT_NUMBER};
+
 
 /** @enum Define format of scanned ports used program options */
 enum port_format
@@ -30,8 +30,8 @@ struct port
 {
     int start;
     int end;
-    int *array;
     int array_length;
+    int *array;
 };
 
 /** @brief Store program options */
@@ -45,30 +45,6 @@ struct arguments
     struct port udp;
     int timeout;
 };
-
-
-/* Parse argument in format: 'start-end' into structure port (start, end) */
-void set_port_range(struct port *port, char *argument);
-
-/* Convert port number and insert it into array */
-void port_array_insert(int* array, int position, char *number);
-
-/* Parse argument in format: 'port1,port2,port3...' into structure port (array, array_length)*/
-void set_port_array(struct port *port, char *argument);
-
-/**
- * @brief Function called when port option was found
- * @details Supported port options are in range format (24-30) or discrete values (24,50)
- *  which are stored separately. For range format, start and end port numbers are stored in port structure.
- *  For discrete values, each value is stored in array in port structure
- * @param[out] t        Pointer to port format in arguments
- * @param[out] port     Pointer to port structure in arguments
- * @param[in]  argument Currently parsed option
- */
-void set_port(enum port_format *t, struct port *port, char *argument);
-
-// Function to determine actions when certain option is found
-error_t parse_opt (int key, char *arg, struct argp_state *state);
 
 /**
  * @brief Parsing function
