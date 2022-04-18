@@ -4,8 +4,8 @@
  * @brief   Implementation of functions used for parsing arguments
  */
 
-#include <getopt.h>
-#include "network.h"
+#include <getopt.h>     // getopt
+#include "scanner.h"    // print_interfaces, resolve_hostname
 #include "parse_args.h"
 
 static char help_string[] =
@@ -131,6 +131,11 @@ struct arguments *parse_args(int argc, char *argv[]) {
 
             case 'i':
                 strncpy(args.interface, optarg, 255);
+                // interface followed by another option
+                if (optarg[0]=='-') {
+                    print_interfaces();
+                    exit(0);
+                }
                 break;
 
             case 'u':
