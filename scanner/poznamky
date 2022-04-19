@@ -14,4 +14,5 @@ testovanie aplikacie:
         jeden pc bude mať otvorené porty a druhý ich bude skenovať
 
 
-postup podla navodu https://marcocetica.com/posts/socket_tutorial_part3/
+
+vytvorenie TCP header https://www.binarytides.com/raw-sockets-c-code-linux/

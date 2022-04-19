@@ -17,14 +17,20 @@
 
 enum error {E_INTERNAL = -10, E_UNKNOWN_OPT, E_OPT_MISSING_ARG, E_MISSING_DOMAIN, E_MISSING_INTERFACE, E_MISSING_PORTS, E_PORT_NUMBER};
 
-/** @enum Define format of scanned ports used program options */
+/** 
+ * @enum port_format
+ * @brief Define format of scanned ports used program options
+ */
 enum port_format
 {
     CONT = 1, /*!< continuous format: range (eg. 20-30) */
     DISC  /*!< discrete format: concrete values (eg. 20,30) */
 };
 
-/** @struct Define boundaries of continuous port type or concrete port values for discrete port type */
+/** 
+ * @struct port
+ * @brief Define boundaries of continuous port type or concrete port values for discrete port type 
+ */
 struct port
 {
     int start;
@@ -33,7 +39,10 @@ struct port
     int *array;
 };
 
-/** @brief Store program options */
+/** 
+ * @struct arguments
+ * @brief Store program options 
+ */
 struct arguments
 {
     char interface[256];

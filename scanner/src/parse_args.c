@@ -5,7 +5,7 @@
  */
 
 #include <getopt.h>     // getopt
-#include "scanner.h"    // print_interfaces, resolve_hostname
+#include "scanner.h"    // print_interfaces, resolve_domain
 #include "parse_args.h"
 
 static char help_string[] =
@@ -193,7 +193,7 @@ struct arguments *parse_args(int argc, char *argv[]) {
 
     // if user inserted domain name, convert it to IP address
     if (!valid_address(args.domain)) {
-        strcpy(args.domain, resolve_hostname(args.domain));
+        strcpy(args.domain, resolve_domain(args.domain));
     }
   
     return &args;
