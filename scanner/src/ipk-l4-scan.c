@@ -18,6 +18,10 @@ void print_result(int portnum, enum port_status status, char *protocol)
         case FILTERED:
             printf("filtered\n");
             break;
+        
+        default:
+            printf("error occured\n");
+            break;
     }
 }
 
@@ -37,17 +41,20 @@ int main(int argc, char const *argv[])
     enum port_status result;
     if ((tcp_type = user_args->tcp_type) != 0) {
         if (tcp_type == CONT) {
-            for (int i = user_args->tcp.start; i < user_args->tcp.end; i++) {
+            for (int i = user_args->tcp.start; i <= user_args->tcp.end; i++) {
                 result = tcp_ipv4_scan(user_args->domain, user_args->interface, user_args->timeout, i);
                 print_result(i, result, "tcp");
             }
         } else {
-            for (int i = 0; i <= user_args->tcp.array_length; i++) {
+            for (int i = 0; i < user_args->tcp.array_length; i++) {
                 result = tcp_ipv4_scan(user_args->domain, user_args->interface, user_args->timeout, user_args->tcp.array[i]);
                 print_result(user_args->tcp.array[i], result, "tcp");
             }
+            free(user_args->tcp.array);
+
         }
     }
 
+    
     return 0;
 }

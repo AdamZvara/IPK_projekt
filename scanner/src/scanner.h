@@ -25,7 +25,7 @@ struct pseudo_header
 	u_int16_t tcp_length;
 };
 
-typedef enum port_status {OPENED = 1, FILTERED, CLOSED} p_status;
+typedef enum port_status {NONE = 1, OPENED, FILTERED, CLOSED} p_status;
 
 /**
  * @brief Check if given address is in valid IP format

@@ -123,20 +123,12 @@ int send_ipv4_syn(int rtcp_socket, char *domain, char *interface, int port)
     source: https://www.binarytides.com/raw-sockets-c-code-linux/
     author: Silver Moon */
     struct tcphdr *tcph = malloc(sizeof(struct tcphdr));
+    memset(tcph, 0, sizeof(struct tcphdr)); // initialize tcp header to 0s
     tcph->source = htons(SENDER_PORT);
 	tcph->dest = htons(port);
-	tcph->seq = 0;
-	tcph->ack_seq = 0;
-	tcph->doff = 5;	                    // tcp header size
-	tcph->fin=0;
-	tcph->syn=1;
-	tcph->rst=0;
-	tcph->psh=0;
-	tcph->ack=0;
-	tcph->urg=0;
-	tcph->window = htons (5840);	    // maximum allowed window size
-	tcph->check = 0;                    // checksum will be filled later
-	tcph->urg_ptr = 0;
+	tcph->doff = 5;	                        // tcp header size
+	tcph->syn = 1;                          // SYN flag
+	tcph->window = htons(5840);	            // maximum allowed window size
 
     /* fill IP pseudo header */
 	struct pseudo_header psh;
@@ -165,14 +157,15 @@ int send_ipv4_syn(int rtcp_socket, char *domain, char *interface, int port)
     // send first TCP packet with SYN FLAG
     sendto(rtcp_socket, tcph, sizeof(struct tcphdr), 0, (struct sockaddr*)&dst_address, sizeof(dst_address));
 
+    free(tcph);
+    free(pseudogram);
+
     return 0;
 }
 
 
 enum port_status tcp_ipv4_scan(char *domain, char *interface, int timeout, int port)
 {
-    (void) timeout;
-
     /* create raw socket which will be using TCP protocol */
     /* IP header will be provided for us, we just need to create TCP header */
     int rtcp_socket = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
@@ -185,16 +178,14 @@ enum port_status tcp_ipv4_scan(char *domain, char *interface, int timeout, int p
     char errbuf[PCAP_ERRBUF_SIZE];
     bpf_u_int32 netp;
     bpf_u_int32 maskp;
-    pcap_t* descr;
     struct pcap_pkthdr hdr;
     const u_char *packet;
     struct bpf_program fp;
 
-    pcap_lookupnet(interface,&netp,&maskp,errbuf);
+    pcap_lookupnet(interface, &netp, &maskp, errbuf);
 
-    descr = pcap_open_live(interface,BUFSIZ,0,100,errbuf);
-    handle = descr;
-    if(descr == NULL)
+    handle = pcap_open_live(interface, BUFSIZ, 0, 100, errbuf);
+    if(handle == NULL)
     {
         printf("pcap_open_live(): %s\n",errbuf);
         exit(1);
@@ -215,12 +206,12 @@ enum port_status tcp_ipv4_scan(char *domain, char *interface, int timeout, int p
     char IP_str[IP_LENGTH];
     strcat(filter_string, inet_ntop(AF_INET, &IP_int, IP_str, IP_LENGTH));
 
-    if (pcap_compile(descr, &fp, filter_string, 0, netp) == -1) { 
+    if (pcap_compile(handle, &fp, filter_string, 0, netp) == -1) { 
         perror("Error calling pcap_compile"); 
         exit(1); 
     }
 
-    if (pcap_setfilter(descr, &fp) == -1) { 
+    if (pcap_setfilter(handle, &fp) == -1) { 
         perror("Error setting filter"); 
         exit(1); 
     }
@@ -248,8 +239,8 @@ enum port_status tcp_ipv4_scan(char *domain, char *interface, int timeout, int p
     }
 
     // catch response
-    packet = pcap_next(descr, &hdr);
-    if(packet == NULL) {
+    packet = pcap_next(handle, &hdr);
+    if (packet == NULL) {
         // no packet found, try to resend packet
         send_ipv4_syn(rtcp_socket, domain, interface, port);
 
@@ -258,13 +249,14 @@ enum port_status tcp_ipv4_scan(char *domain, char *interface, int timeout, int p
             exit(1);
         }
 
-        packet = pcap_next(descr, &hdr);
+        /* packet = pcap_next(handle, &hdr);
         if (packet == NULL) {
             return FILTERED;
-        }
+        } */
+        return NONE;
     }
 
-    // trying to get to TCP header from incoming packet, but first we need IP header size
+    //trying to get to TCP header from incoming packet, but first we need IP header size
     struct iphdr *ip = (struct iphdr *)(packet + ETHER_HDR_LEN);
     int ip_header_length = ((ip->ihl) & 0xf) * 4;
 
@@ -276,5 +268,9 @@ enum port_status tcp_ipv4_scan(char *domain, char *interface, int timeout, int p
         return OPENED;
     }
 
-    return 0;
+    pcap_freecode(&fp);
+    pcap_close(handle);
+    close(rtcp_socket);
+
+    return NONE;
 }

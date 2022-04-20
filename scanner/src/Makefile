@@ -8,7 +8,6 @@ project = ipk-l4-scan
 
 $(project): $(project).c parse_args.o scanner.o
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS) 
-	rm -rf *.o
 	
 clean:
 	rm -rf $(project) *.o
