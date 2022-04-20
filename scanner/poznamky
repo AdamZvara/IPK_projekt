@@ -1,7 +1,8 @@
 parsovanie argumentov:
-    parsuje pomocou getopt, nejaka nadstavba nad getopt
+    parsuje pomocou getopt
     naparsovanie vsetkych argumentov z command line do strukutry argument
-        domain name sa prekonvertuje na adresu
+        domain name sa prekonvertuje na adresu + vsetky ostatne argumenty na ich jednotlive typy
+
 
 testovanie aplikacie:
     porovnanie vystupu aplikacie s nmap - nastroj na skenovanie portov
@@ -9,10 +10,12 @@ testovanie aplikacie:
     vytvorenie skriptu server.sh ktorý pomocou pythonu vytvára otvorené porty 
     potvrdenie nmap že tam skutočne sú
     tieto porty > 1024 z bezpečnostných dôvodov
-    možno nainštalovať rovnaké servery jak som mal predtým aby som otestoval aj porty < 1024
-    skúsiť spraviť nejakú jednoduchú architektúru podľa návodu http://www.brianlinkletter.com/how-to-use-virtualbox-to-emulate-a-network/ - 2pc jeden router, 
-        jeden pc bude mať otvorené porty a druhý ich bude skenovať
-
+        ## možno nainštalovať rovnaké servery jak som mal predtým aby som otestoval aj porty < 1024
+        ## skúsiť spraviť nejakú jednoduchú architektúru podľa návodu http://www.brianlinkletter.com/how-to-use-virtualbox-to-emulate-a-network/ - 2pc jeden router, 
+            ## jeden pc bude mať otvorené porty a druhý ich bude skenovať
 
 
 vytvorenie TCP header https://www.binarytides.com/raw-sockets-c-code-linux/
+
+pouzitie globalnych premennych:
+    handler - musi byt pouzity pretoze pouzivam signal na prerusenie zachytavania paketov - nedaju sa predavat argumenty

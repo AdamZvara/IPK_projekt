@@ -1,24 +1,29 @@
 /**
- * @file    parse_args.h
- * @author  Adam Zvara, xzvara01@vutbr.cz
  * @brief   Header file for parsing command line options
+ * @file    parse_args.h
+ * @author  xzvara01(@vutbr.cz)
+ * @date    20.04.2022
  */
 
 #ifndef _ARG_PARSE_H
 #define _ARG_PARSE_H 1
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
+
+#include "common.h"
 
 #define TIMEOUT_DEFAULT  5000
-#define error_internal() {fprintf(stderr, "Internal error occured\n"); exit(E_INTERNAL);}
-#define help() {fprintf(stderr, "%s", help_string); exit(0);}
 
-enum error {E_INTERNAL = -10, E_UNKNOWN_OPT, E_OPT_MISSING_ARG, E_MISSING_DOMAIN, E_MISSING_INTERFACE, E_MISSING_PORTS, E_PORT_NUMBER};
+#define help()           {fprintf(stderr, "%s", help_string); exit(0);}
+#define INVALID_ARG 2
+#define MISSING_ARG 3
+#define UNKNOWN_OPT 4
 
 /** 
  * @enum port_format
+ * 
  * @brief Define format of scanned ports used program options
  */
 enum port_format
@@ -29,6 +34,7 @@ enum port_format
 
 /** 
  * @struct port
+ * 
  * @brief Define boundaries of continuous port type or concrete port values for discrete port type 
  */
 struct port
@@ -41,6 +47,7 @@ struct port
 
 /** 
  * @struct arguments
+ * 
  * @brief Store program options 
  */
 struct arguments
@@ -55,17 +62,25 @@ struct arguments
 };
 
 /**
- * @brief Parsing function
- * @details Function uses argp parsing combined with my own domain_parse function, which
- *  handles special program option - domain/IP_address
- * @param[in] argc Number of arguments
- * @param[in] argv Program arguments
- * @return Static structure 'arguments' containing parsed options
+ * @brief Parse arguments from command line into struct arguments structure
+ * 
+ * @param[in] argc Number of program arguments
+ * @param[in] argv Actual program arguments
+ * 
+ * @return Pointer to static structure 'arguments' containing parsed options
  */
 struct arguments *parse_args(int argc, char *argv[]);
 
 /**
+ * @brief Free pointers allocated for port arrays in parse_args
+ * 
+ * @param[in] uargs Number of arguments
+ */
+void free_args(struct arguments *uargs);
+
+/**
  * @brief Print argument structure
+ * 
  * @param[in] user_args Argument structure
  */
 void print_args(struct arguments user_args);

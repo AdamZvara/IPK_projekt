@@ -1,11 +1,12 @@
 /**
- * @file    parse_args.c
- * @author  Adam Zvara, xzvara01@vutbr.cz
  * @brief   Implementation of functions used for parsing arguments
+ * @file    parse_args.c
+ * @author  xzvara01(@vutbr.cz)
+ * @date    20.04.2022
  */
 
 #include <getopt.h>     // getopt
-#include "scanner.h"    // print_interfaces, resolve_domain
+#include "tcp_scan.h"   // print_interfaces, resolve_domain
 #include "parse_args.h"
 
 static char help_string[] =
@@ -24,12 +25,12 @@ int convert_port_number(char *port_number)
     int retval;
     if ((retval = atoi(port_number)) <= 0) {
         fprintf(stderr, "Starting range number could not be converted\n");
-        exit(E_PORT_NUMBER);
+        exit(INVALID_ARG);
     } 
 
     if (retval > 65535 || retval < 1) {
         fprintf(stderr, "Port range number has to be in interval <1,65535>\n");
-        exit(E_PORT_NUMBER);
+        exit(INVALID_ARG);
     }
 
     return retval;
@@ -57,7 +58,7 @@ void set_port_range(struct port *port, char *argument)
 
     if (port->start > port->end) {
         fprintf(stderr, "Starting port number must be lower than ending port number\n");
-        exit(E_PORT_NUMBER);
+        exit(INVALID_ARG);
     }
 }
 
@@ -160,13 +161,13 @@ struct arguments *parse_args(int argc, char *argv[]) {
                     exit(0);
                 } else {
                     fprintf(stderr, "Option (%c) is missing an argument\n", optopt);
-                    exit(E_OPT_MISSING_ARG);
+                    exit(MISSING_ARG);
                 }
                 break;
 
             default:
                 fprintf(stderr, "Unknown option used\n");
-                exit(E_UNKNOWN_OPT);
+                exit(UNKNOWN_OPT);
                 break;
         }
     }
@@ -176,27 +177,35 @@ struct arguments *parse_args(int argc, char *argv[]) {
         strcpy(args.domain, argv[optind]);
     } else {
         fprintf(stderr, "Missing domain arugment\n");
-        exit(E_MISSING_DOMAIN);
+        exit(MISSING_ARG);
     }
 
     // check if interface has been provided
     if (!strcmp(args.interface, "")) {
         fprintf(stderr, "Provide name of the interface\n");
-        exit(E_MISSING_INTERFACE);
+        exit(MISSING_ARG);
     }
 
     // check if at least one port number has been defined
     if (args.tcp_type == 0 && args.udp_type == 0) {
         fprintf(stderr, "Provide ports to be scanned\n");
-        exit(E_MISSING_PORTS);
+        exit(MISSING_ARG);
     }
 
     // if user inserted domain name, convert it to IP address
     if (!valid_address(args.domain)) {
-        strcpy(args.domain, resolve_domain(args.domain));
+        strcpy(args.domain, domain_to_IP(args.domain));
     }
   
     return &args;
+}
+
+void free_args(struct arguments *uargs)
+{
+    if (uargs->tcp_type == DISC) 
+        free(uargs->tcp.array);
+    if (uargs->udp_type == DISC) 
+        free(uargs->udp.array);
 }
 
 void print_args(struct arguments user_args)
