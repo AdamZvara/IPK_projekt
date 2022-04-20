@@ -6,8 +6,9 @@
  */
 
 #include <stdio.h>
-#include "parse_args.h" // struct arguments
-#include "tcp_scan.h"   // scanner functions
+#include "common.h"
+#include "udp_scan.h"
+#include "tcp_scan.h"
 
 /* Global variables */
 pcap_t *handle;
@@ -64,18 +65,17 @@ int main(int argc, char const *argv[])
         }
     }
 
+    /* UDP (IPv4) scanning */
     if ((pformat = user_args->udp_type) != 0) {    // check if user asked for any UDP ports
         if (pformat == CONT) {
             for (int i = user_args->udp.start; i <= user_args->udp.end; i++) {
-                //pstatus = tcp_ipv4_scan(*user_args, i);
-                printf("scanning UDP %d\n", i);
-                print_status(i, pstatus, "udp");
+                pstatus = udp_ipv4_scan(*user_args, i);
+                print_status_opened(i, pstatus, "udp");
             }
         } else {
             for (int i = 0; i < user_args->udp.array_length; i++) {
-                //pstatus = tcp_ipv4_scan(*user_args, user_args->tcp.array[i]);
-                printf("scanning UDP %d\n", user_args->udp.array[i]);
-                print_status(user_args->udp.array[i], pstatus, "udp");
+                pstatus = udp_ipv4_scan(*user_args, user_args->udp.array[i]);
+                print_status_opened(user_args->udp.array[i], pstatus, "udp");
             }
         }
     }

@@ -9,7 +9,13 @@
 #include <netdb.h>              // gethostbyname
 #include <net/if.h>             // if_nameindex
 
+#include "parse_args.h"
+
 #define SENDER_PORT 46300
+
+#define FILTER_STR_LEN 1024
+#define ETHER_HEADER_LEN 14
+
 #define ERR 1
 #define error_internal() {fprintf(stderr, "Internal error occured\n"); exit(ERR);}
 
@@ -40,5 +46,35 @@ char *domain_to_IP(char *domain);
  * @brief Print all existing network interfaces
  */
 void print_interfaces();
+
+/**
+ * @brief Get IP address of used interface for pseudo header
+ *
+ * @return 32bit IP address of interface
+ *
+ * source: https://www.geekpage.jp/en/programming/linux-network/get-ipaddr.php
+ * author: Akimichi Ogawa
+ */
+uint32_t get_interface_ip(int socket, char *interface);
+
+/**
+ * @brief Create string to filter out unwanted traffic
+ * @details Example output string: tcp and src port 1234 and dst port 1234 and src host 127.0.0.1 and dst host 127.0.0.1
+ * 
+ * @param[in] uargs Program arguments
+ * @param[in] port  Destination port number 
+ * @param[in] socket_fd Socket descriptor
+ * @param[in] protocol  Type of protocol
+ * 
+ * @return Pointer to static char array representing filter string
+ */
+char *set_filter_string(struct arguments uargs, int port, int socket_fd, char *protocol);
+
+/**
+ * @brief Event handler for SIGALRM used for stopping pcap_next
+ * 
+ * @param[in] signum Signal number
+ */
+void breakloop(int signum);
 
 #endif

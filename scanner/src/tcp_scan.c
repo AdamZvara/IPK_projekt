@@ -11,26 +11,8 @@
 #include <unistd.h>
 #include <netinet/tcp.h>	    // struct tcphdr
 #include <netinet/ip.h>	        // struct iphdr
-#include <sys/ioctl.h>          // ioctl
 
 #include "tcp_scan.h"
-
-/**
- * @brief Get IP address of used interface for pseudo header
- *
- * @return 32bit IP address of interface
- *
- * source: https://www.geekpage.jp/en/programming/linux-network/get-ipaddr.php
- * author: Akimichi Ogawa
- */
-uint32_t get_interface_ip(int socket, char *interface)
-{
-    struct ifreq ifr;
-    ifr.ifr_addr.sa_family = AF_INET;
-    strncpy(ifr.ifr_name, interface, IFNAMSIZ-1);
-    ioctl(socket, SIOCGIFADDR, &ifr);
-    return ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr.s_addr;
-}
 
 /**
  * @brief Calculate generic checksum 
@@ -62,13 +44,6 @@ unsigned short csum(unsigned short *ptr, int nbytes)
 	answer=(short)~sum;
 
 	return(answer);
-}
-
-/* Event handler for SIGALRM used for stopping pcap_next */
-void breakloop(int signum)
-{
-    (void) signum;
-    pcap_breakloop(handle);
 }
 
 /**
@@ -133,40 +108,6 @@ void send_ipv4_syn(int socket, char *domain, char *interface, int port)
     free(pseudogram);
 }
 
-/**
- * @brief Create string to filter out unwanted traffic
- * @details Example output string: tcp and src port 1234 and dst port 1234 and src host 127.0.0.1 and dst host 127.0.0.1
- * 
- * @param[in] uargs Program arguments
- * @param[in] port  Destination port number 
- * @param[in] socket_fd Socket descriptor
- * @param[in] protocol  Type of protocol
- * 
- * @return Pointer to static char array representing filter string
- */
-char *set_filter_string(struct arguments uargs, int port, int socket_fd, char *protocol)
-{
-    static char filter_string[FILTER_STR_LEN];
-    memset(filter_string, 0, FILTER_STR_LEN);
-
-    strcat(filter_string, protocol);
-    strcat(filter_string, " and src port ");
-    char port_str[10] = "";
-    snprintf(port_str, 10, "%d", port);
-    strcat(filter_string, port_str);
-    strcat(filter_string, " and dst port ");
-    snprintf(port_str, 10, "%d", SENDER_PORT);
-    strcat(filter_string, port_str);
-    strcat(filter_string, " and src host ");
-    strcat(filter_string, uargs.domain);
-    strcat(filter_string, " and dst host ");
-    int32_t IP_int = get_interface_ip(socket_fd, uargs.interface);
-    char IP_str[INET6_ADDRSTRLEN];
-    strcat(filter_string, inet_ntop(AF_INET, &IP_int, IP_str, INET6_ADDRSTRLEN));
-
-    return filter_string;
-}
-
 p_status tcp_ipv4_scan(struct arguments uargs, int port)
 {
     /* Create raw socket which will be using TCP protocol */
@@ -192,7 +133,6 @@ p_status tcp_ipv4_scan(struct arguments uargs, int port)
         perror("Error setting filter");
         exit(1);
     }
-
 
     /* Send SYN packet */
     send_ipv4_syn(socket_fd, uargs.domain, uargs.interface, port);

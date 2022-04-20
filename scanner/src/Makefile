@@ -6,7 +6,7 @@ project = ipk-l4-scan
 
 .PHONY: clean
 
-$(project): $(project).c parse_args.o tcp_scan.o common.o
+$(project): $(project).c parse_args.o common.o tcp_scan.o udp_scan.o  
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS) 
 	
 clean:

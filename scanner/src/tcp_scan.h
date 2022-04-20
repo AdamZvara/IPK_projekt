@@ -11,9 +11,6 @@
 #include "common.h"
 #include "parse_args.h"
 
-#define ETHER_HEADER_LEN 14
-#define FILTER_STR_LEN 1024
-
 /**
  * @struct pseudo_header
  * 
