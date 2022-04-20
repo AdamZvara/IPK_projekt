@@ -179,7 +179,7 @@ enum port_status tcp_ipv4_scan(char *domain, char *interface, int timeout, int p
     bpf_u_int32 netp;
     bpf_u_int32 maskp;
     struct pcap_pkthdr hdr;
-    const u_char *packet;
+    const u_char *packet = NULL;
     struct bpf_program fp;
 
     pcap_lookupnet(interface, &netp, &maskp, errbuf);
@@ -249,23 +249,33 @@ enum port_status tcp_ipv4_scan(char *domain, char *interface, int timeout, int p
             exit(1);
         }
 
-        /* packet = pcap_next(handle, &hdr);
+        packet = pcap_next(handle, &hdr);
         if (packet == NULL) {
+            pcap_freecode(&fp);
+            pcap_close(handle);
+            close(rtcp_socket);
             return FILTERED;
-        } */
-        return NONE;
+        }
     }
 
     //trying to get to TCP header from incoming packet, but first we need IP header size
-    struct iphdr *ip = (struct iphdr *)(packet + ETHER_HDR_LEN);
-    int ip_header_length = ((ip->ihl) & 0xf) * 4;
+    if (packet != NULL) {
+        struct iphdr *ip = (struct iphdr *)(packet + ETHER_HDR_LEN);
+        int ip_header_length = ((ip->ihl) & 0xf) * 4;
 
-    struct tcphdr* tcp_header = (struct tcphdr*) (packet + ETHER_HDR_LEN + ip_header_length);
-    if(tcp_header->rst == 1 && tcp_header->ack == 1){
-        return CLOSED;
-    }
-    else if(tcp_header->rst == 0 && tcp_header->ack == 1){
-        return OPENED;
+        struct tcphdr* tcp_header = (struct tcphdr*) (packet + ETHER_HDR_LEN + ip_header_length);
+        if(tcp_header->rst == 1 && tcp_header->ack == 1){
+            pcap_freecode(&fp);
+            pcap_close(handle);
+            close(rtcp_socket);
+            return CLOSED;
+        }
+        else if(tcp_header->rst == 0 && tcp_header->ack == 1){
+            pcap_freecode(&fp);
+            pcap_close(handle);
+            close(rtcp_socket);
+            return OPENED;
+        }
     }
 
     pcap_freecode(&fp);
