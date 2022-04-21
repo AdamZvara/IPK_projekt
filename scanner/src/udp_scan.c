@@ -13,6 +13,14 @@
 #include <netinet/ip_icmp.h>	// struct udphdr
 #include "udp_scan.h"
 
+/**
+ * @brief Send UDP packet
+ * 
+ * @param[in] socket Socket descriptor
+ * @param[in] domain Domain (IP address) to send packet to
+ * @param[in] interface Name of interface to send packet from
+ * @param[in] port Port number to send packet to 
+ */
 void send_ipv4_udp(int socket, char *domain, char *interface, int port)
 {
     /* Bind socket to interface given by user */
@@ -103,7 +111,7 @@ p_status udp_ipv4_scan(struct arguments uargs, int port)
         return OPENED;
     }
     
-    /* Get to UDP header from incoming packet and check type */
+    /* Get to ICMP header from incoming packet and check type */
     struct iphdr *ip = (struct iphdr *)(packet + ETHER_HEADER_LEN);
     int ip_header_length = ((ip->ihl) & 0xf) * 4;
 

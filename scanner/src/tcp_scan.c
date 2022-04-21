@@ -50,7 +50,7 @@ unsigned short csum(unsigned short *ptr, int nbytes)
  * @brief Send TCP packet with SYN flag set
  * 
  * @param[in] socket Socket descriptor
- * @param[in] domain Domain to send packet to
+ * @param[in] domain Domain (IP address) to send packet to
  * @param[in] interface Name of interface to send packet from
  * @param[in] port Port number to send packet to 
  */

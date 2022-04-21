@@ -1,5 +1,5 @@
-udpPath='udp.py'
-ports=(1234 8034 16790 35075 65535)
+udpPath='/home/student/IPK/scanner/server/udp.py'
+ports=(1111 1234 1329 1395 1500 17897 18345 26324 40256 65535)
 
 udpProcesses=()
 tcpProcesses=()

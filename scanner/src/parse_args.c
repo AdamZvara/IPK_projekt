@@ -1,7 +1,7 @@
 /**
  * @brief   Implementation of functions used for parsing arguments
- * @file    parse_args.c
  * @author  xzvara01(@vutbr.cz)
+ * @file    parse_args.c
  * @date    20.04.2022
  */
 

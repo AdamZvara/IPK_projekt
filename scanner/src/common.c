@@ -1,3 +1,10 @@
+/**
+ * @brief   Implementation of common functions used by whole program
+ * @author  xzvara01(@vutbr.cz)
+ * @file    common.c
+ * @date    20.04.2022
+ */
+
 #include <sys/ioctl.h>          // ioctl
 
 #include "common.h"

@@ -1,3 +1,10 @@
+/**
+ * @brief   Header file for common functions used by whole program
+ * @author  xzvara01(@vutbr.cz)
+ * @file    common.h
+ * @date    20.04.2022
+ */
+
 #ifndef _COMMON_H
 #define _COMMON_H 1
 
