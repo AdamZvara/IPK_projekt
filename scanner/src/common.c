@@ -28,7 +28,6 @@ char *domain_to_IP(char *domain)
     return inet_ntoa(*((struct in_addr*)host->h_addr));
 }
 
-
 void print_interfaces()
 {
     struct if_nameindex *name_index, *intf;
@@ -42,24 +41,51 @@ void print_interfaces()
     }
 }
 
-uint32_t get_interface_ip(int socket, char *interface)
+char *get_interface_ipv6(char *interface)
 {
+    static char ip[INET6_ADDRSTRLEN];
+    struct ifaddrs *ifa, *ifa_iter;
+    if (getifaddrs(&ifa) == -1) {
+        perror("getifaddrs() failed to get interfaces: ");
+        exit(ERR);
+    }
+
+    ifa_iter = ifa;
+	// iterate through getifaddrs linked list and find interface with IPv6 address and matching interface name
+    for (ifa_iter = ifa; ifa_iter != NULL; ifa_iter = ifa_iter->ifa_next) {
+        if ((ifa_iter->ifa_addr) && (ifa_iter->ifa_addr->sa_family == AF_INET6) && !strcmp(ifa_iter->ifa_name, interface)) {
+            struct sockaddr_in6 *in6 = (struct sockaddr_in6*) ifa_iter->ifa_addr;
+            inet_ntop(AF_INET6, &in6->sin6_addr, ip, INET6_ADDRSTRLEN);
+        }
+    }
+    freeifaddrs(ifa);
+
+    return ip;
+}
+
+uint32_t get_interface_ipv4(char *interface)
+{
+    int socket_fd;
     struct ifreq ifr;
+
+    if ((socket_fd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) == -1)
+        error_internal();
+    
     ifr.ifr_addr.sa_family = AF_INET;
     strncpy(ifr.ifr_name, interface, IFNAMSIZ-1);
-    ioctl(socket, SIOCGIFADDR, &ifr);
+    ioctl(socket_fd, SIOCGIFADDR, &ifr);
     return ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr.s_addr;
 }
 
-char *set_filter_string(struct arguments uargs, int port, int socket_fd, char *protocol)
+char *set_filter_string(struct arguments uargs, int port, char *protocol)
 {
     static char filter_string[FILTER_STR_LEN];
     memset(filter_string, 0, FILTER_STR_LEN);
 
     strcat(filter_string, protocol);
     if (!strcmp(protocol, "tcp")) {
-    strcat(filter_string, " and src port ");
-    char port_str[10] = "";
+        strcat(filter_string, " and src port ");
+        char port_str[10] = "";
         snprintf(port_str, 10, "%d", port);
         strcat(filter_string, port_str);
         strcat(filter_string, " and dst port ");
@@ -69,9 +95,13 @@ char *set_filter_string(struct arguments uargs, int port, int socket_fd, char *p
     strcat(filter_string, " and src host ");
     strcat(filter_string, uargs.domain);
     strcat(filter_string, " and dst host ");
-    int32_t IP_int = get_interface_ip(socket_fd, uargs.interface);
-    char IP_str[INET6_ADDRSTRLEN];
-    strcat(filter_string, inet_ntop(AF_INET, &IP_int, IP_str, INET6_ADDRSTRLEN));
+    if (strstr(uargs.domain, ".")) {
+        int32_t IP_int = get_interface_ipv4(uargs.interface);
+        char IP_str[INET6_ADDRSTRLEN];
+        strcat(filter_string, inet_ntop(AF_INET, &IP_int, IP_str, INET6_ADDRSTRLEN));
+    } else {
+        strcat(filter_string, get_interface_ipv6(uargs.interface));
+    }
 
     return filter_string;
 }

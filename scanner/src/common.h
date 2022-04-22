@@ -15,6 +15,7 @@
 #include <netinet/in.h>         // sockaddr_in, in_addr
 #include <netdb.h>              // gethostbyname
 #include <net/if.h>             // if_nameindex
+#include <ifaddrs.h>            // struct ifaddrs
 
 #include "parse_args.h"
 
@@ -55,17 +56,31 @@ char *domain_to_IP(char *domain);
 void print_interfaces();
 
 /**
- * @brief Get IP address of used interface for pseudo header
+ * @brief Get IPv4 address of used interface for pseudo header
+ *
+ * @param[in] interface String name of interface 
  *
  * @return 32bit IP address of interface
  *
  * source: https://www.geekpage.jp/en/programming/linux-network/get-ipaddr.php
  * author: Akimichi Ogawa
  */
-uint32_t get_interface_ip(int socket, char *interface);
+uint32_t get_interface_ipv4(char *interface);
 
 /**
- * @brief Create string to filter out unwanted traffic
+ * @brief Get IPv6 address of used interface
+ *
+ * @param[in] interface String name of interface 
+ *
+ * @return String IP address of interface
+ *
+ * source: 
+ * author: 
+ */
+char *get_interface_ipv6(char *interface);
+
+/**
+ * @brief Create string to filter out unwanted traffic, dst ip address can be ipv4 or ipv6 depending on domain address
  * @details Example output string: tcp and src port 1234 and dst port 1234 and src host 127.0.0.1 and dst host 127.0.0.1
  * 
  * @param[in] uargs Program arguments
@@ -75,7 +90,7 @@ uint32_t get_interface_ip(int socket, char *interface);
  * 
  * @return Pointer to static char array representing filter string
  */
-char *set_filter_string(struct arguments uargs, int port, int socket_fd, char *protocol);
+char *set_filter_string(struct arguments uargs, int port, char *protocol);
 
 /**
  * @brief Event handler for SIGALRM used for stopping pcap_next

@@ -29,7 +29,7 @@ struct pseudo_header
 };
 
 /**
- * @brief Scan single TCP port
+ * @brief Scan single TCP port using IPv4
  * 
  * @param[in] uargs Program options
  * @param[in] port 	Port number to scan
@@ -37,5 +37,15 @@ struct pseudo_header
  * @return Value from enum port_status which represents state of scanned port
  */
 p_status tcp_ipv4_scan(struct arguments uargs, int port);
+
+/**
+ * @brief Scan single TCP port using IPv6
+ * 
+ * @param[in] uargs Program options
+ * @param[in] port 	Port number to scan
+ *
+ * @return Value from enum port_status which represents state of scanned port
+ */
+p_status tcp_ipv6_scan(struct arguments uargs, int port);
 
 #endif

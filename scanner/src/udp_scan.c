@@ -66,7 +66,7 @@ p_status udp_ipv4_scan(struct arguments uargs, int port)
     bpf_u_int32 netp, maskp;
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_lookupnet(uargs.interface, &netp, &maskp, errbuf);
-    char *filter_string = set_filter_string(uargs, port, socket_fd, "icmp");
+    char *filter_string = set_filter_string(uargs, port, "icmp");
 
     if (pcap_compile(handle, &fp, filter_string, 0, netp) == -1) {
         perror("Error calling pcap_compile");

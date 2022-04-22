@@ -19,3 +19,5 @@ vytvorenie TCP header https://www.binarytides.com/raw-sockets-c-code-linux/
 
 pouzitie globalnych premennych:
     handler - musi byt pouzity pretoze pouzivam signal na prerusenie zachytavania paketov - nedaju sa predavat argumenty
+
+prijatelne skenovanie ipv6 len za pouzitia ipv6 adresy (nie domenoveho mena)

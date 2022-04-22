@@ -50,18 +50,34 @@ int main(int argc, char const *argv[])
     enum port_format pformat;
     enum port_status pstatus;
     
-    /* TCP (IPv4) scanning */
-    if ((pformat = user_args->tcp_type) != 0) {    // check if user asked for any TCP ports
-        if (pformat == CONT) {
-            for (int i = user_args->tcp.start; i <= user_args->tcp.end; i++) {
-                pstatus = tcp_ipv4_scan(*user_args, i);
-                print_status(i, pstatus, "tcp");
+    /* TCP scanning */
+    if ((pformat = user_args->tcp_type) != 0) { // check if user asked for any TCP ports
+        if (strstr(user_args->domain, ".") && !(strstr(user_args->domain, ":"))) { // ipv4 address
+            if (pformat == CONT) {
+                for (int i = user_args->tcp.start; i <= user_args->tcp.end; i++) {
+                    pstatus = tcp_ipv4_scan(*user_args, i);
+                    print_status(i, pstatus, "tcp");
+                }
+            } else {
+                for (int i = 0; i < user_args->tcp.array_length; i++) {
+                    pstatus = tcp_ipv4_scan(*user_args, user_args->tcp.array[i]);
+                    print_status(user_args->tcp.array[i], pstatus, "tcp");
+                }   
+            }
+        } else if (strstr(user_args->domain, ":") && !(strstr(user_args->domain, "."))) {
+            if (pformat == CONT) {
+                for (int i = user_args->tcp.start; i <= user_args->tcp.end; i++) {
+                    pstatus = tcp_ipv6_scan(*user_args, i);
+                    print_status(i, pstatus, "tcp");
+                }
+            } else {
+                for (int i = 0; i < user_args->tcp.array_length; i++) {
+                    pstatus = tcp_ipv6_scan(*user_args, user_args->tcp.array[i]);
+                    print_status(user_args->tcp.array[i], pstatus, "tcp");
+                }   
             }
         } else {
-            for (int i = 0; i < user_args->tcp.array_length; i++) {
-                pstatus = tcp_ipv4_scan(*user_args, user_args->tcp.array[i]);
-                print_status(user_args->tcp.array[i], pstatus, "tcp");
-            }
+            fprintf(stderr, "Unsuported domain format\n");
         }
     }
 
