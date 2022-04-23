@@ -41,43 +41,10 @@
 #include <errno.h>            // errno, perror()
 
 // Define some constants.
-#define ETH_HDRLEN 14  // Ethernet header length
-#define IP6_HDRLEN 40  // IPv6 header length
+
 #define TCP_HDRLEN 20  // TCP header length, excludes options data
 #define IP6_HDRLEN 40         // IPv6 header length
 #define ICMP_HDRLEN 8         // ICMP header length for echo request, excludes data
-
-/**
- * @brief Calculate generic checksum 
- * 
- * @return Calculated checksum
- *
- * source: https://www.binarytides.com/raw-sockets-c-code-linux/
- * author: Silver Moon
- */
-unsigned short csum(unsigned short *ptr, int nbytes)
-{
-    register long sum;
-    unsigned short oddbyte;
-    register short answer;
-
-    sum=0;
-    while(nbytes>1) {
-      sum+=*ptr++;
-      nbytes-=2;
-    }
-    if(nbytes==1) {
-      oddbyte=0;
-      *((u_char*)&oddbyte)=*(u_char*)ptr;
-      sum+=oddbyte;
-    }
-
-    sum = (sum>>16)+(sum & 0xffff);
-    sum = sum + (sum>>16);
-    answer=(short)~sum;
-
-    return(answer);
-}
 
 /**
  * @brief Send TCP packet with SYN flag set
@@ -212,10 +179,10 @@ p_status tcp_ipv4_scan(struct arguments uargs, int port)
     }
 
     /* Get to TCP header from incoming packet and check flags */
-    struct iphdr *ip = (struct iphdr *)(packet + ETHER_HEADER_LEN);
+    struct iphdr *ip = (struct iphdr *)(packet + ETH_HDRLEN);
     int ip_header_length = ((ip->ihl) & 0xf) * 4;
 
-    struct tcphdr* tcp_header = (struct tcphdr*) (packet + ETHER_HEADER_LEN + ip_header_length);
+    struct tcphdr* tcp_header = (struct tcphdr*) (packet + ETH_HDRLEN + ip_header_length);
     if(tcp_header->rst == 1 && tcp_header->ack == 1){
         pcap_freecode(&fp);
         close(socket_fd);
@@ -467,7 +434,7 @@ p_status tcp_ipv6_scan(struct arguments uargs, int port)
 	int socket_fd;
 
 	/* Get raw socket */
-    if ((socket_fd = socket (PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0) {
+    if ((socket_fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0) {
       perror("socket() failed: ");
       exit(EXIT_FAILURE);
     }
@@ -533,8 +500,7 @@ p_status tcp_ipv6_scan(struct arguments uargs, int port)
     }
 
     /* Get to TCP header from incoming packet and check flags */
-    int ip_header_length = 40; // IPv6 header is always 40 bytes long
-    struct tcphdr* tcp_header = (struct tcphdr*) (packet + ETHER_HEADER_LEN + ip_header_length);
+    struct tcphdr* tcp_header = (struct tcphdr*) (packet + ETH_HDRLEN + IP6_HDRLEN);
     if(tcp_header->rst == 1 && tcp_header->ack == 1){
         pcap_freecode(&fp);
         close(socket_fd);

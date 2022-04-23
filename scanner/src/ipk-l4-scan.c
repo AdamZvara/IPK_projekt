@@ -44,6 +44,12 @@ int main(int argc, char const *argv[])
         return 1;
     }
 
+    // Make sure we are capturing on Ethernet
+    if(pcap_datalink(handle) != DLT_EN10MB){
+        fprintf(stderr, "%s is not an Ethernet\n", user_args->interface);
+        exit(ERR);
+    }
+
     printf("Interesting ports on %s:\n", user_args->domain);
     printf("PORT\tSTATE\n");
 
@@ -64,7 +70,7 @@ int main(int argc, char const *argv[])
                     print_status(user_args->tcp.array[i], pstatus, "tcp");
                 }   
             }
-        } else if (strstr(user_args->domain, ":") && !(strstr(user_args->domain, "."))) {
+        } else if (strstr(user_args->domain, ":") && !(strstr(user_args->domain, "."))) { // ipv6 address
             if (pformat == CONT) {
                 for (int i = user_args->tcp.start; i <= user_args->tcp.end; i++) {
                     pstatus = tcp_ipv6_scan(*user_args, i);
@@ -78,21 +84,39 @@ int main(int argc, char const *argv[])
             }
         } else {
             fprintf(stderr, "Unsuported domain format\n");
+            exit(ERR);
         }
     }
 
     /* UDP (IPv4) scanning */
     if ((pformat = user_args->udp_type) != 0) {    // check if user asked for any UDP ports
-        if (pformat == CONT) {
-            for (int i = user_args->udp.start; i <= user_args->udp.end; i++) {
-                pstatus = udp_ipv4_scan(*user_args, i);
-                print_status_opened(i, pstatus, "udp");
+        if (strstr(user_args->domain, ".") && !(strstr(user_args->domain, ":"))) { // ipv4 address
+            if (pformat == CONT) {
+                for (int i = user_args->udp.start; i <= user_args->udp.end; i++) {
+                    pstatus = udp_ipv4_scan(*user_args, i);
+                    print_status_opened(i, pstatus, "udp");
+                }
+            } else {
+                for (int i = 0; i < user_args->udp.array_length; i++) {
+                    pstatus = udp_ipv4_scan(*user_args, user_args->udp.array[i]);
+                    print_status_opened(user_args->udp.array[i], pstatus, "udp");
+                }
+            }
+        } else if (strstr(user_args->domain, ":") && !(strstr(user_args->domain, "."))) { // ipv6 address
+            if (pformat == CONT) {
+                for (int i = user_args->udp.start; i <= user_args->udp.end; i++) {
+                    pstatus = udp_ipv6_scan(*user_args, i);
+                    print_status(i, pstatus, "udp");
+                }
+            } else {
+                for (int i = 0; i < user_args->udp.array_length; i++) {
+                    pstatus = udp_ipv6_scan(*user_args, user_args->udp.array[i]);
+                    print_status(user_args->udp.array[i], pstatus, "udp");
+                }
             }
         } else {
-            for (int i = 0; i < user_args->udp.array_length; i++) {
-                pstatus = udp_ipv4_scan(*user_args, user_args->udp.array[i]);
-                print_status_opened(user_args->udp.array[i], pstatus, "udp");
-            }
+            fprintf(stderr, "Unsuported domain format\n");
+            exit(ERR);
         }
     }
 

@@ -13,4 +13,6 @@
 
 p_status udp_ipv4_scan(struct arguments uargs, int port);
 
+p_status udp_ipv6_scan(struct arguments uargs, int port);
+
 #endif

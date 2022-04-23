@@ -22,7 +22,8 @@
 #define SENDER_PORT 46300
 
 #define FILTER_STR_LEN 1024
-#define ETHER_HEADER_LEN 14
+#define ETH_HDRLEN 14  // Ethernet header length
+#define IP6_HDRLEN 40  // IPv6 header length
 
 #define ERR 1
 #define error_internal() {fprintf(stderr, "Internal error occured\n"); exit(ERR);}
@@ -98,5 +99,15 @@ char *set_filter_string(struct arguments uargs, int port, char *protocol);
  * @param[in] signum Signal number
  */
 void breakloop(int signum);
+
+/**
+ * @brief Calculate generic checksum 
+ * 
+ * @return Calculated checksum
+ *
+ * source: https://www.binarytides.com/raw-sockets-c-code-linux/
+ * author: Silver Moon
+ */
+unsigned short csum(unsigned short *ptr, int nbytes);
 
 #endif
