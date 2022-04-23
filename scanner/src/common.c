@@ -2,10 +2,8 @@
  * @brief   Implementation of common functions used by whole program
  * @author  xzvara01(@vutbr.cz)
  * @file    common.c
- * @date    20.04.2022
+ * @date    23.04.2022
  */
-
-#include <sys/ioctl.h>          // ioctl
 
 #include "common.h"
 
@@ -19,13 +17,51 @@ bool valid_address(char *address)
     return result != 0;
 }
 
-char *domain_to_IP(char *domain)
+void domain_to_IP(char *domain)
 {
-    struct hostent *host;
-    if ((host = gethostbyname(domain)) == NULL)
-        error_internal();    
+    struct addrinfo hints, *res;
+    int status;
+    static char ip[INET6_ADDRSTRLEN];
+    memset(ip, 0, INET6_ADDRSTRLEN);
 
-    return inet_ntoa(*((struct in_addr*)host->h_addr));
+    /* First try to get IPv4 address */
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    
+    if((status = getaddrinfo(domain, NULL, &hints, &res)) != 0){
+        fprintf(stderr, "Failed to get IP address\n");
+        exit(ERR);
+    }
+
+    if (res != NULL) {
+        struct sockaddr_in *ipv4 = (struct sockaddr_in *)res->ai_addr;
+        inet_ntop(res->ai_family, &(ipv4->sin_addr), ip, sizeof(ip));
+        strncpy(domain, ip, INET6_ADDRSTRLEN);
+        freeaddrinfo(res);
+        return;
+    }
+
+    /* IPv4 address was not found, try ipv6 */
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_INET6;
+    hints.ai_socktype = SOCK_STREAM;
+
+    // get the address information
+    if((status = getaddrinfo(domain, NULL, &hints, &res)) != 0){
+        fprintf(stderr, "Failed to get IP address\n");
+        exit(ERR);
+    }
+
+    if (res != NULL) {
+        struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)res->ai_addr;
+        inet_ntop(res->ai_family, &(ipv6->sin6_addr), ip, sizeof(ip));
+        strncpy(domain, ip, INET6_ADDRSTRLEN);
+        freeaddrinfo(res);
+        return;
+    }
+
+    error_internal();
 }
 
 void print_interfaces()
@@ -39,6 +75,20 @@ void print_interfaces()
         }
         if_freenameindex(name_index);
     }
+}
+
+uint32_t get_interface_ipv4(char *interface)
+{
+    int socket_fd;
+    struct ifreq ifr;
+
+    if ((socket_fd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) == -1)
+        error_internal();
+    
+    ifr.ifr_addr.sa_family = AF_INET;
+    strncpy(ifr.ifr_name, interface, IFNAMSIZ-1);
+    ioctl(socket_fd, SIOCGIFADDR, &ifr);
+    return ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr.s_addr;
 }
 
 char *get_interface_ipv6(char *interface)
@@ -61,20 +111,6 @@ char *get_interface_ipv6(char *interface)
     freeifaddrs(ifa);
 
     return ip;
-}
-
-uint32_t get_interface_ipv4(char *interface)
-{
-    int socket_fd;
-    struct ifreq ifr;
-
-    if ((socket_fd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) == -1)
-        error_internal();
-    
-    ifr.ifr_addr.sa_family = AF_INET;
-    strncpy(ifr.ifr_name, interface, IFNAMSIZ-1);
-    ioctl(socket_fd, SIOCGIFADDR, &ifr);
-    return ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr.s_addr;
 }
 
 char *set_filter_string(struct arguments uargs, int port, char *protocol)
@@ -112,15 +148,6 @@ void breakloop(int signum)
     pcap_breakloop(handle);
 }
 
-
-/**
- * @brief Calculate generic checksum 
- * 
- * @return Calculated checksum
- *
- * source: https://www.binarytides.com/raw-sockets-c-code-linux/
- * author: Silver Moon
- */
 unsigned short csum(unsigned short *ptr, int nbytes)
 {
     register long sum;

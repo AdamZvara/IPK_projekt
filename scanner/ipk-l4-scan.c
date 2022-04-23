@@ -2,13 +2,17 @@
  * @brief   Simple TCP/UDP port scanner 
  * @author  xzvara01(@vutbr.cz)
  * @file    ipk-l4-scan.c
- * @date    20.04.2022
+ * @date    22.04.2022
  */
 
 #include <stdio.h>
-#include "common.h"
-#include "udp_scan.h"
-#include "tcp_scan.h"
+#include <string.h>
+#include <stdlib.h>
+#include <pcap.h>
+#include "src/common.h"
+#include "src/parse_args.h"
+#include "src/udp_scan.h"
+#include "src/tcp_scan.h"
 
 /* Global variables */
 pcap_t *handle;
@@ -41,12 +45,12 @@ int main(int argc, char const *argv[])
     handle = pcap_open_live(user_args->interface, BUFSIZ, 0, 100, error_buffer);
     if (handle == NULL) {
         fprintf(stderr, "pcap_open_live(): %s\n", error_buffer);
-        return 1;
+        return ERR;
     }
 
-    // Make sure we are capturing on Ethernet
+    /* Make sure we are capturing on Ethernet */
     if(pcap_datalink(handle) != DLT_EN10MB){
-        fprintf(stderr, "%s is not an Ethernet\n", user_args->interface);
+        fprintf(stderr, "Not capturing on ethernet\n");
         exit(ERR);
     }
 
@@ -88,18 +92,18 @@ int main(int argc, char const *argv[])
         }
     }
 
-    /* UDP (IPv4) scanning */
+    /* UDP scanning */
     if ((pformat = user_args->udp_type) != 0) {    // check if user asked for any UDP ports
         if (strstr(user_args->domain, ".") && !(strstr(user_args->domain, ":"))) { // ipv4 address
             if (pformat == CONT) {
                 for (int i = user_args->udp.start; i <= user_args->udp.end; i++) {
                     pstatus = udp_ipv4_scan(*user_args, i);
-                    print_status_opened(i, pstatus, "udp");
+                    print_status(i, pstatus, "udp");
                 }
             } else {
                 for (int i = 0; i < user_args->udp.array_length; i++) {
                     pstatus = udp_ipv4_scan(*user_args, user_args->udp.array[i]);
-                    print_status_opened(user_args->udp.array[i], pstatus, "udp");
+                    print_status(user_args->udp.array[i], pstatus, "udp");
                 }
             }
         } else if (strstr(user_args->domain, ":") && !(strstr(user_args->domain, "."))) { // ipv6 address

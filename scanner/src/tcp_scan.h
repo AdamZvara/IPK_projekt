@@ -2,7 +2,7 @@
  * @brief 	Header file for TCP scanning functions
  * @author  xzvara01(@vutbr.cz)
  * @file    tcp_scan.h
- * @date    20.04.2022
+ * @date    22.04.2022
  */
 
 #ifndef _TCP_SCAN_H

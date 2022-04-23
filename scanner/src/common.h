@@ -2,7 +2,7 @@
  * @brief   Header file for common functions used by whole program
  * @author  xzvara01(@vutbr.cz)
  * @file    common.h
- * @date    20.04.2022
+ * @date    23.04.2022
  */
 
 #ifndef _COMMON_H
@@ -11,10 +11,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <pcap.h>
+#include <string.h>    
+#include <signal.h>
+#include <time.h>
+#include <unistd.h>
+#include <errno.h>              // errno, perror()
+#include <pcap.h>               // pcap_breakloop
+#include <sys/types.h>
+#include <sys/socket.h>         // needed for socket
+#include <sys/ioctl.h>          // ioctl
 #include <netinet/in.h>         // sockaddr_in, in_addr
-#include <netdb.h>              // gethostbyname
 #include <net/if.h>             // if_nameindex
+#include <netdb.h>              // getaddrinfo, struct addrinfo
 #include <ifaddrs.h>            // struct ifaddrs
 
 #include "parse_args.h"
@@ -45,14 +53,17 @@ typedef enum port_status {NONE, OPENED, FILTERED, CLOSED} p_status;
 bool valid_address(char *address);
 
 /**
- * @brief Convert domain name to IP address (IPv4)
+ * @brief Convert domain name to IP address (primarily IPv4)
  *
- * @return Pointer to converted IP address if successful, otherwise NULL
+ * @param[in,out] domain Domain name which will be converted to IP address and stored back
  */
-char *domain_to_IP(char *domain);
+void domain_to_IP(char *domain);
 
 /**
  * @brief Print all existing network interfaces
+ * 
+ * author: brm
+ * source: https://stackoverflow.com/a/19228190
  */
 void print_interfaces();
 
@@ -74,9 +85,6 @@ uint32_t get_interface_ipv4(char *interface);
  * @param[in] interface String name of interface 
  *
  * @return String IP address of interface
- *
- * source: 
- * author: 
  */
 char *get_interface_ipv6(char *interface);
 

@@ -2,48 +2,19 @@
  * @brief 	Implementation of TCP scanning functions
  * @author  xzvara01(@vutbr.cz)
  * @file    tcp_scan.c
- * @date    20.04.2022
+ * @date    22.04.2022
  */
 
-#include <sys/socket.h>
-#include <signal.h>
-#include <time.h>
-#include <unistd.h>
 #include <netinet/tcp.h>	    // struct tcphdr
 #include <netinet/ip.h>	        // struct iphdr
-
+#include <netinet/ip6.h>        // struct ip6_hdr
+#include <arpa/inet.h>          // inet_pton and inet_ntop
+#include <linux/if_ether.h>     // ETH_P_IP, ETH_P_IPV6
+#include <linux/if_packet.h>    // struct sockaddr_ll
+#include <net/ethernet.h>
 #include "tcp_scan.h"
 
-// TESTING ZONE
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>           // close()
-#include <string.h>           // strcpy, memset(), and memcpy()
-
-#include <sys/types.h>
-
-
-#include <netdb.h>            // struct addrinfo
-#include <sys/types.h>        // needed for socket(), uint8_t, uint16_t, uint32_t
-#include <sys/socket.h>       // needed for socket()
-#include <netinet/in.h>       // IPPROTO_TCP, INET6_ADDRSTRLEN
-#include <netinet/ip.h>       // IP_MAXPACKET (which is 65535)
-#include <netinet/ip6.h>      // struct ip6_hdr
-#define __FAVOR_BSD           // Use BSD format of tcp header
-#include <netinet/tcp.h>      // struct tcphdr
-#include <arpa/inet.h>        // inet_pton() and inet_ntop()
-#include <sys/ioctl.h>        // macro ioctl is defined
-#include <bits/ioctls.h>      // defines values for argument "request" of ioctl.
-#include <net/if.h>           // struct ifreq
-#include <linux/if_ether.h>   // ETH_P_IP = 0x0800, ETH_P_IPV6 = 0x86DD
-#include <linux/if_packet.h>  // struct sockaddr_ll (see man 7 packet)
-#include <net/ethernet.h>
-#include <errno.h>            // errno, perror()
-
-// Define some constants.
-
 #define TCP_HDRLEN 20  // TCP header length, excludes options data
-#define IP6_HDRLEN 40         // IPv6 header length
 #define ICMP_HDRLEN 8         // ICMP header length for echo request, excludes data
 
 /**
@@ -139,7 +110,7 @@ p_status tcp_ipv4_scan(struct arguments uargs, int port)
 
     /* Prepare alarm signal to interrupt pcap_next
      *  
-     * source: https://stackoverflow.com/questions/4583386/listening-using-pcap-with-timeout
+     * source: https://stackoverflow.com/a/13749514
      * author: lemonsqueeze
      */
     if (signal(SIGALRM, breakloop) == SIG_ERR) {
@@ -203,6 +174,8 @@ p_status tcp_ipv4_scan(struct arguments uargs, int port)
 /**
  * @brief Build IPv6 TCP pseudo-header and call checksum function (Section 8.1 of RFC 2460)
  *
+ * author: P.D. Buchan
+ * source: https://www.pdbuchan.com/rawsock/tcp6_ll.c
  */
 uint16_t tcp6_checksum(struct ip6_hdr iphdr, struct tcphdr tcphdr) 
 {
@@ -298,6 +271,9 @@ uint16_t tcp6_checksum(struct ip6_hdr iphdr, struct tcphdr tcphdr)
  * @param[in] domain Domain (IP address) to send packet to
  * @param[in] interface Name of interface to send packet from
  * @param[in] port Port number to send packet to 
+ * 
+ * author: P.D. Buchan
+ * source: https://www.pdbuchan.com/rawsock/tcp6_ll.c (modified)
  */
 void ipv6_syn(int socket_fd, char *domain, char *interface, int port)
 {
@@ -460,7 +436,7 @@ p_status tcp_ipv6_scan(struct arguments uargs, int port)
 
     /* Prepare alarm signal to interrupt pcap_next
      *  
-     * source: https://stackoverflow.com/questions/4583386/listening-using-pcap-with-timeout
+     * source: https://stackoverflow.com/a/13749514
      * author: lemonsqueeze
      */
     if (signal(SIGALRM, breakloop) == SIG_ERR) {

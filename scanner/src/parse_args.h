@@ -8,10 +8,6 @@
 #ifndef _ARG_PARSE_H
 #define _ARG_PARSE_H 1
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "common.h"
 
 #define TIMEOUT_DEFAULT  5000

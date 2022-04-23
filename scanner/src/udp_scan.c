@@ -2,35 +2,18 @@
  * @brief 	Implementation of UDP scanning functions
  * @author  xzvara01(@vutbr.cz)
  * @file    udp_scan.c
- * @date    20.04.2022
+ * @date    22.04.2022
  */
 
-#include <signal.h>
-#include <time.h>
-#include <unistd.h>
 #include <netinet/udp.h>	    // struct udphdr
-#include <netinet/ip.h>	        // struct iphdr
-#include <netinet/ip_icmp.h>	// struct udphdr
+#include <netinet/ip_icmp.h>	// struct icmphdr
 #include <netinet/icmp6.h>      // struct icmp6 
-#include "udp_scan.h"
-
-// TESTING ZONE
-#include <netdb.h>            // struct addrinfo
-#include <sys/types.h>        // needed for socket(), uint8_t, uint16_t, uint32_t
-#include <sys/socket.h>       // needed for socket()
-#include <netinet/in.h>       // IPPROTO_TCP, INET6_ADDRSTRLEN
-#include <netinet/ip.h>       // IP_MAXPACKET (which is 65535)
-#include <netinet/ip6.h>      // struct ip6_hdr
-#define __FAVOR_BSD           // Use BSD format of tcp header
-#include <netinet/udp.h>      // struct tcphdr
-#include <arpa/inet.h>        // inet_pton() and inet_ntop()
-#include <sys/ioctl.h>        // macro ioctl is defined
-#include <bits/ioctls.h>      // defines values for argument "request" of ioctl.
-#include <net/if.h>           // struct ifreq
-#include <linux/if_ether.h>   // ETH_P_IP = 0x0800, ETH_P_IPV6 = 0x86DD
-#include <linux/if_packet.h>  // struct sockaddr_ll (see man 7 packet)
+#include <netinet/ip6.h>        // struct ip6_hdr
+#include <arpa/inet.h>          // inet_pton() and inet_ntop()
+#include <linux/if_ether.h>     // ETH_P_IP = 0x0800, ETH_P_IPV6 = 0x86DD
+#include <linux/if_packet.h>    // struct sockaddr_ll (see man 7 packet)
 #include <net/ethernet.h>
-#include <errno.h>            // errno, perror()
+#include "udp_scan.h"
 
 #define UDP_HDRLEN  8
 
@@ -67,10 +50,12 @@ void ipv4_udp(int socket, char *domain, char *interface, int port)
     /* Connect to given interface on given port and send packet*/
     if (connect(socket, (struct sockaddr*)&dst_address, sizeof(dst_address)) == -1) {
         perror("Unable to connect to address");
+        free(udph);
         exit(ERR);
     }
 
     sendto(socket, udph, sizeof(struct udphdr), 0, (struct sockaddr*)&dst_address, sizeof(dst_address));
+    free(udph);
 }
 
 p_status udp_ipv4_scan(struct arguments uargs, int port)
@@ -79,7 +64,7 @@ p_status udp_ipv4_scan(struct arguments uargs, int port)
     int socket_fd = socket(AF_INET, SOCK_RAW, IPPROTO_UDP);
     if (socket_fd == -1) {
         perror("Unable to create socket");
-        exit(1);
+        exit(ERR);
     }
 
     /* Set pcap filter string */
@@ -91,12 +76,12 @@ p_status udp_ipv4_scan(struct arguments uargs, int port)
 
     if (pcap_compile(handle, &fp, filter_string, 0, netp) == -1) {
         perror("Error calling pcap_compile");
-        exit(1);
+        exit(ERR);
     }
 
     if (pcap_setfilter(handle, &fp) == -1) {
         perror("Error setting filter");
-        exit(1);
+        exit(ERR);
     }
 
     /* Send UDP packet */
@@ -104,12 +89,12 @@ p_status udp_ipv4_scan(struct arguments uargs, int port)
 
     /* Prepare alarm signal to interrupt pcap_next
      *  
-     * source: https://stackoverflow.com/questions/4583386/listening-using-pcap-with-timeout
+     * source: https://stackoverflow.com/a/13749514
      * author: lemonsqueeze
      */
     if (signal(SIGALRM, breakloop) == SIG_ERR) {
         perror("Unable to catch SIGALRM");
-        exit(1);
+        exit(ERR);
     }
 
     struct itimerval time;
@@ -119,7 +104,7 @@ p_status udp_ipv4_scan(struct arguments uargs, int port)
 
     if (setitimer(ITIMER_REAL, &time, NULL) == -1) {
         perror("Unable to send SIGALRM");
-        exit(1);
+        exit(ERR);
     }
 
     /* Catch response */
@@ -149,7 +134,14 @@ p_status udp_ipv4_scan(struct arguments uargs, int port)
     return NONE;
 }
 
-uint16_t udp6_checksum(struct ip6_hdr iphdr, struct udphdr udphdr) {
+/**
+ * @brief Build IPv6 UDP pseudo-header and call checksum function
+ * 
+ * author: P.D. Buchan
+ * source: https://www.pdbuchan.com/rawsock/udp6_ll.c
+ */
+uint16_t udp6_checksum(struct ip6_hdr iphdr, struct udphdr udphdr) 
+{
     char buf[IP_MAXPACKET];
     char *ptr;
     int chksumlen = 0;
@@ -206,6 +198,12 @@ uint16_t udp6_checksum(struct ip6_hdr iphdr, struct udphdr udphdr) {
     return csum((uint16_t *) buf, chksumlen);
 }
 
+/**
+ * @brief Send IPv6 UDP packet
+ * 
+ * author: P.D. Buchan
+ * source: https://www.pdbuchan.com/rawsock/udp6_ll.c (modified)
+ */
 void ipv6_udp(int socket_fd, char *domain, char *interface, int port)
 {
     int status;
@@ -338,7 +336,7 @@ p_status udp_ipv6_scan(struct arguments uargs, int port)
     int socket_fd;
     if ((socket_fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0) {
       perror("socket() failed: ");
-      exit(EXIT_FAILURE);
+      exit(ERR);
     }
 
     /* Set pcap filter string */
@@ -363,7 +361,7 @@ p_status udp_ipv6_scan(struct arguments uargs, int port)
 
     /* Prepare alarm signal to interrupt pcap_next
      *  
-     * source: https://stackoverflow.com/questions/4583386/listening-using-pcap-with-timeout
+     * source: https://stackoverflow.com/a/13749514
      * author: lemonsqueeze
      */
     if (signal(SIGALRM, breakloop) == SIG_ERR) {

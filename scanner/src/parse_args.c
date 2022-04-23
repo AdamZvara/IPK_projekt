@@ -5,15 +5,14 @@
  * @date    20.04.2022
  */
 
-#include <getopt.h>     // getopt
-#include "tcp_scan.h"   // print_interfaces, resolve_domain
-#include "parse_args.h"
+#include <getopt.h> // getopt
+#include "common.h" // print_interfaces
 
 static char help_string[] =
 "USAGE: ./ipk-l4-scan interface ports domain {timeout}\n\
 Scan domain for openned ports\n\n\
 interface\n\t-i | --interface[=interface]\tSelect interface from which packets will be sent\n\
-\t\t\t\t\tThis option without argument prints all availiable interfaces\n\
+\t\t\t\t\tThis option without argument prints all available interfaces\n\
 ports\n\t-u | --pu=port_range Range of UDP ports to be scanned\n\
 \t-t | --pt=port_range Range of TCP ports to be scanned\n\
 domain\n\t domain name or IP address to be scanned\n\
@@ -156,11 +155,11 @@ struct arguments *parse_args(int argc, char *argv[]) {
             
             case ':':
                 if (optopt == 'i') {
-                    printf("Availiable interfaces:\n");
+                    printf("Available interfaces:\n");
                     print_interfaces();
                     exit(0);
                 } else {
-                    fprintf(stderr, "Option (%c) is missing an argument\n", optopt);
+                    fprintf(stderr, "Option is missing an argument\n");
                     exit(MISSING_ARG);
                 }
                 break;
@@ -194,7 +193,7 @@ struct arguments *parse_args(int argc, char *argv[]) {
 
     // if user inserted domain name, convert it to IP address
     if (!valid_address(args.domain)) {
-        strcpy(args.domain, domain_to_IP(args.domain));
+        domain_to_IP(args.domain);
     }
   
     return &args;
